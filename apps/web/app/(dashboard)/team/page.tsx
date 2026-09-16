@@ -11,6 +11,8 @@ import {
   XCircle,
   AlertTriangle,
   X,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/auth-context';
@@ -38,6 +40,8 @@ export default function TeamPage() {
   const [newRole, setNewRole] = useState<UserRole>('employee');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [createdCredentials, setCreatedCredentials] = useState<{ email: string; tempPass: string; fullName: string } | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const loadTeamData = async () => {
     setIsLoading(true);
@@ -98,7 +102,7 @@ export default function TeamPage() {
     }
   };
 
-  // Change employee role (Admin only)
+  // Change employee role
   const handleRoleChange = async (targetUser: Profile, updatedRole: UserRole) => {
     setTeam((prev) =>
       prev.map((m) =>
@@ -118,50 +122,45 @@ export default function TeamPage() {
     }
   };
 
-  // Add Employee (Note: In production Supabase, creating an auth user from the client is done via signUp or an admin edge function; here we insert into profiles and call signUp)
+  // Add Employee via Supabase Admin API endpoint (bypasses email rate limits & marks email_confirm = true)
   const handleAddEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
     setIsSubmitting(true);
 
     try {
-      // 1. Create user via Supabase Auth signUp with metadata
-      // Password generated randomly or temporary
-      const tempPassword = 'CLC_' + Math.random().toString(36).substring(2, 10) + '!';
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: newEmail.trim(),
-        password: tempPassword,
-        options: {
-          data: {
-            full_name: newFullName.trim(),
-            phone: newPhone.trim() || null,
-            role: newRole,
-          },
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      const res = await fetch('/api/team/create-employee', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
+        body: JSON.stringify({
+          fullName: newFullName.trim(),
+          email: newEmail.trim(),
+          phone: newPhone.trim() || null,
+          role: newRole,
+        }),
       });
 
-      if (authError) throw authError;
-
-      // If auth trigger created profile or if we need to ensure profile role is set
-      if (authData.user) {
-        await supabase
-          .from('profiles')
-          .update({
-            full_name: newFullName.trim(),
-            phone: newPhone.trim() || null,
-            role: newRole,
-          })
-          .eq('id', authData.user.id);
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to create employee');
       }
+
+      setCreatedCredentials({
+        fullName: newFullName.trim(),
+        email: newEmail.trim(),
+        tempPass: data.tempPassword,
+      });
 
       setNewFullName('');
       setNewEmail('');
       setNewPhone('');
       setNewRole('employee');
-      setIsAddModalOpen(false);
-      alert(
-        `Employee created successfully!\nTemporary Password: ${tempPassword}\nPlease share this with the employee.`
-      );
       loadTeamData();
     } catch (err: any) {
       setFormError(err.message || 'Failed to create employee');
@@ -375,80 +374,167 @@ export default function TeamPage() {
               </div>
             )}
 
-            <form onSubmit={handleAddEmployee} className="mt-4 space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">
-                  {t('field_contact_person')} *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={newFullName}
-                  onChange={(e) => setNewFullName(e.target.value)}
-                  placeholder="e.g. Faisal Al-Saud"
-                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-button focus:outline-none focus:border-ink-900"
-                />
-              </div>
+            {createdCredentials ? (
+              <div className="mt-4 space-y-4">
+                <div className="p-4 bg-green-50 border border-green-200 rounded-card flex items-start gap-3">
+                  <CheckCircle className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-green-900">
+                      {t('success')}! {t('team_member')} created successfully
+                    </p>
+                    <p className="text-xs text-green-700">
+                      Account is active and ready to log in. Please copy the credentials and share them with the employee.
+                    </p>
+                  </div>
+                </div>
 
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">
-                  {t('field_email')} *
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={newEmail}
-                  onChange={(e) => setNewEmail(e.target.value)}
-                  placeholder="faisal@clc.com.sa"
-                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-button focus:outline-none focus:border-ink-900"
-                />
-              </div>
+                <div className="bg-surfaceSubtle border border-gray-200 rounded-card p-4 space-y-3">
+                  <div>
+                    <span className="text-[11px] font-semibold text-gray-400 block uppercase tracking-wider">
+                      {t('field_contact_person')}
+                    </span>
+                    <span className="text-sm font-bold text-ink-900">{createdCredentials.fullName}</span>
+                  </div>
 
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">
-                  {t('field_phone')}
-                </label>
-                <input
-                  type="tel"
-                  value={newPhone}
-                  onChange={(e) => setNewPhone(e.target.value)}
-                  placeholder="05XXXXXXXX"
-                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-button focus:outline-none focus:border-ink-900"
-                />
-              </div>
+                  <div>
+                    <span className="text-[11px] font-semibold text-gray-400 block uppercase tracking-wider">
+                      {t('field_email')}
+                    </span>
+                    <span className="text-sm font-bold text-ink-900 select-all font-mono">{createdCredentials.email}</span>
+                  </div>
 
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">
-                  {t('field_role')}
-                </label>
-                <CustomSelect
-                  value={newRole}
-                  onChange={(val) => setNewRole(val as UserRole)}
-                  options={[
-                    { value: 'employee', label: formatRole('employee') },
-                    { value: 'supervisor', label: formatRole('supervisor') },
-                    { value: 'admin', label: formatRole('admin') },
-                  ]}
-                />
-              </div>
+                  <div>
+                    <span className="text-[11px] font-semibold text-gray-400 block uppercase tracking-wider">
+                      {t('auth_password')} ({t('active')})
+                    </span>
+                    <span className="text-sm font-mono font-extrabold text-ink-900 select-all bg-white px-2.5 py-1.5 rounded border border-gray-200 block mt-1">
+                      {createdCredentials.tempPass}
+                    </span>
+                  </div>
+                </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-200">
-                <button
-                  type="button"
-                  onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-ink-900 rounded-button"
-                >
-                  {t('cancel')}
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="px-5 py-2 text-sm font-medium bg-ink-900 text-white rounded-button hover:bg-black disabled:opacity-50"
-                >
-                  {isSubmitting ? t('saving') : t('team_add_employee')}
-                </button>
+                <div className="flex items-center gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const textToCopy = `CLC CRM Login:\nEmail: ${createdCredentials.email}\nPassword: ${createdCredentials.tempPass}\nURL: https://clc-crm.vercel.app/login`;
+                      navigator.clipboard.writeText(textToCopy);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 3000);
+                    }}
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 bg-ink-900 text-white rounded-button text-xs font-semibold hover:bg-black transition-colors"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="h-4 w-4 text-green-400" />
+                        <span>Copied to Clipboard!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-4 w-4" />
+                        <span>Copy Login Credentials</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setCreatedCredentials(null)}
+                    className="px-4 py-2.5 bg-white border border-gray-200 rounded-button text-xs font-semibold text-ink-900 hover:bg-gray-50 transition-colors"
+                  >
+                    + Add Another
+                  </button>
+                </div>
+
+                <div className="text-center pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCreatedCredentials(null);
+                      setIsAddModalOpen(false);
+                    }}
+                    className="text-xs text-gray-500 hover:text-ink-900 underline font-medium"
+                  >
+                    {t('close')}
+                  </button>
+                </div>
               </div>
-            </form>
+            ) : (
+              <form onSubmit={handleAddEmployee} className="mt-4 space-y-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">
+                    {t('field_contact_person')} *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newFullName}
+                    onChange={(e) => setNewFullName(e.target.value)}
+                    placeholder="e.g. Faisal Al-Saud"
+                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-button focus:outline-none focus:border-ink-900"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">
+                    {t('field_email')} *
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    placeholder="faisal@clc.com.sa"
+                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-button focus:outline-none focus:border-ink-900"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">
+                    {t('field_phone')}
+                  </label>
+                  <input
+                    type="tel"
+                    value={newPhone}
+                    onChange={(e) => setNewPhone(e.target.value)}
+                    placeholder="05XXXXXXXX"
+                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-button focus:outline-none focus:border-ink-900"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">
+                    {t('field_role')}
+                  </label>
+                  <CustomSelect
+                    value={newRole}
+                    onChange={(val) => setNewRole(val as UserRole)}
+                    options={[
+                      { value: 'employee', label: formatRole('employee') },
+                      { value: 'supervisor', label: formatRole('supervisor') },
+                      { value: 'admin', label: formatRole('admin') },
+                    ]}
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-200">
+                  <button
+                    type="button"
+                    onClick={() => setIsAddModalOpen(false)}
+                    className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-ink-900 rounded-button"
+                  >
+                    {t('cancel')}
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-5 py-2 text-sm font-medium bg-ink-900 text-white rounded-button hover:bg-black disabled:opacity-50"
+                  >
+                    {isSubmitting ? t('saving') : t('team_add_employee')}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}
