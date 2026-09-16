@@ -3,6 +3,8 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import {
   generateExecutiveReportWorkbook,
   type ReportActivityItem,
+  type ReportLeadItem,
+  type ReportCustomerItem,
   type ReportExportMetadata,
 } from '@/lib/reports/excel-generator';
 
@@ -109,6 +111,121 @@ export async function POST(req: NextRequest) {
       };
     });
 
+    // -------------------------------------------------------------
+    // Query Leads & Customers registered within selected date range
+    // -------------------------------------------------------------
+    let leadsQuery = supabase
+      .from('leads')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (start_date) {
+      leadsQuery = leadsQuery.gte('created_at', start_date);
+    }
+    if (end_date) {
+      leadsQuery = leadsQuery.lte('created_at', end_date);
+    }
+    if (effectiveEmployeeId) {
+      leadsQuery = leadsQuery.eq('assigned_to', effectiveEmployeeId);
+    }
+
+    const { data: rawLeads } = await leadsQuery;
+
+    let customersQuery = supabase
+      .from('customers')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (start_date) {
+      customersQuery = customersQuery.gte('created_at', start_date);
+    }
+    if (end_date) {
+      customersQuery = customersQuery.lte('created_at', end_date);
+    }
+    if (effectiveEmployeeId) {
+      customersQuery = customersQuery.eq('assigned_to', effectiveEmployeeId);
+    }
+
+    const { data: rawCustomers } = await customersQuery;
+
+    // Collect all referenced district IDs and profile IDs for bulk enrichment
+    const districtIds = Array.from(
+      new Set([
+        ...(rawLeads || []).map((l: any) => l.district_id).filter(Boolean),
+        ...(rawCustomers || []).map((c: any) => c.district_id).filter(Boolean),
+      ])
+    );
+
+    const districtsMap = new Map<number, { name_ar: string; name_en: string }>();
+    if (districtIds.length > 0) {
+      const { data: districts } = await supabase
+        .from('districts')
+        .select('id, name_ar, name_en')
+        .in('id', districtIds);
+      districts?.forEach((d: any) => {
+        districtsMap.set(d.id, { name_ar: d.name_ar, name_en: d.name_en });
+      });
+    }
+
+    const assignedUserIds = Array.from(
+      new Set([
+        ...(rawLeads || []).map((l: any) => l.assigned_to).filter(Boolean),
+        ...(rawCustomers || []).map((c: any) => c.assigned_to).filter(Boolean),
+      ])
+    );
+
+    const profilesMap = new Map<string, { full_name: string; email: string }>();
+    if (assignedUserIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .in('id', assignedUserIds);
+      profiles?.forEach((p: any) => {
+        profilesMap.set(p.id, { full_name: p.full_name, email: p.email });
+      });
+    }
+
+    const leadsItems: ReportLeadItem[] = (rawLeads || []).map((l: any) => {
+      const dist = l.district_id ? districtsMap.get(l.district_id) : null;
+      const rep = l.assigned_to ? profilesMap.get(l.assigned_to) : null;
+      return {
+        id: l.id,
+        company_name: l.company_name,
+        contact_person: l.contact_person,
+        phone: l.phone,
+        email: l.email,
+        source: l.source,
+        status: l.status,
+        estimated_value: l.estimated_value != null ? Number(l.estimated_value) : null,
+        project_type: l.project_type,
+        district_name_ar: dist?.name_ar || null,
+        district_name_en: dist?.name_en || null,
+        assigned_to_name: rep?.full_name || null,
+        assigned_to_email: rep?.email || null,
+        notes: l.notes,
+        created_at: l.created_at,
+      };
+    });
+
+    const customersItems: ReportCustomerItem[] = (rawCustomers || []).map((c: any) => {
+      const dist = c.district_id ? districtsMap.get(c.district_id) : null;
+      const rep = c.assigned_to ? profilesMap.get(c.assigned_to) : null;
+      return {
+        id: c.id,
+        company_name: c.company_name,
+        contact_person: c.contact_person,
+        phone: c.phone,
+        email: c.email,
+        address: c.address,
+        district_name_ar: dist?.name_ar || null,
+        district_name_en: dist?.name_en || null,
+        assigned_to_name: rep?.full_name || null,
+        assigned_to_email: rep?.email || null,
+        customer_since: c.customer_since,
+        created_at: c.created_at,
+      };
+    });
+
     const dateToday = new Date().toISOString().split('T')[0];
 
     // CSV fallback format if specifically requested
@@ -174,19 +291,30 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Default: Professional Excel Workbook (.xlsx) with KPIs and Pivot Analysis
+    // Default: Professional Excel Workbook (.xlsx) with KPIs, Pivots, Details & Registered Accounts
+    const exportLang: 'ar' | 'en' = lang === 'en' ? 'en' : 'ar';
     const metadata: ReportExportMetadata = {
-      reportTitle: 'CLC CONTRACTING — FIELD OPERATIONS REPORT',
-      dateRangeLabel: date_label || (start_date ? `From ${start_date.split('T')[0]}` : 'All Recorded History'),
-      generatedByName: userProfile?.full_name || user.email || 'CRM Administrator',
+      reportTitle: exportLang === 'en' 
+        ? 'CLC CONTRACTING — FIELD OPERATIONS REPORT' 
+        : 'شركة CLC للمقاولات — تقرير العمليات الميدانية والأنشطة',
+      dateRangeLabel: date_label || (start_date 
+        ? (exportLang === 'en' ? `From ${start_date.split('T')[0]}` : `من تاريخ ${start_date.split('T')[0]}`)
+        : (exportLang === 'en' ? 'All Recorded History' : 'كامل السجل التاريخي')),
+      generatedByName: userProfile?.full_name || user.email || (exportLang === 'en' ? 'CRM Administrator' : 'إدارة النظام'),
       generatedByEmail: userProfile?.email || user.email || '',
       filterScope: effectiveEmployeeId
-        ? enrichedActivities[0]?.employee_name || 'Individual Representative'
-        : 'All Company Representatives',
+        ? enrichedActivities[0]?.employee_name || (exportLang === 'en' ? 'Individual Representative' : 'ممثل فردي')
+        : (exportLang === 'en' ? 'All Company Representatives' : 'كافة موظفي وممثلي الشركة'),
     };
 
-    const excelBuffer = await generateExecutiveReportWorkbook(enrichedActivities, metadata);
-    const filename = `CLC-CRM-Executive-Report-${dateToday}.xlsx`;
+    const excelBuffer = await generateExecutiveReportWorkbook(
+      enrichedActivities,
+      metadata,
+      exportLang,
+      leadsItems,
+      customersItems
+    );
+    const filename = `CLC-CRM-Executive-Report-${exportLang.toUpperCase()}-${dateToday}.xlsx`;
 
     return new NextResponse(new Uint8Array(excelBuffer), {
       status: 200,

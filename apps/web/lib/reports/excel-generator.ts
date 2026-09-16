@@ -17,6 +17,39 @@ export interface ReportActivityItem {
   longitude?: number | null;
 }
 
+export interface ReportLeadItem {
+  id: string;
+  company_name: string;
+  contact_person?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  source?: string | null;
+  status: string;
+  estimated_value?: number | null;
+  project_type?: string | null;
+  district_name_ar?: string | null;
+  district_name_en?: string | null;
+  assigned_to_name?: string | null;
+  assigned_to_email?: string | null;
+  notes?: string | null;
+  created_at: string;
+}
+
+export interface ReportCustomerItem {
+  id: string;
+  company_name: string;
+  contact_person?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+  district_name_ar?: string | null;
+  district_name_en?: string | null;
+  assigned_to_name?: string | null;
+  assigned_to_email?: string | null;
+  customer_since?: string | null;
+  created_at: string;
+}
+
 export interface ReportExportMetadata {
   reportTitle?: string;
   dateRangeLabel?: string;
@@ -25,21 +58,21 @@ export interface ReportExportMetadata {
   filterScope?: string;
 }
 
-// Brand Style Tokens (CLC CRM Design System)
+// Brand Style Tokens (Strictly adhering to CLC CRM Design System - CLC-CRM-Design-System.md)
+// ExcelJS requires 8-character ARGB hex strings (AARRGGBB with solid alpha 'FF' prefix)
 const COLORS = {
-  ink900: '111111',       // Primary Brand Charcoal
-  ink800: '1F2937',       // Dark Gray
-  cream100: 'F4F3E4',     // Warm Dashboard Background
-  cream200: 'EBE9D0',     // Warm border / highlight
-  gray50: 'F9FAFB',       // Subtle Zebra Stripe
-  gray100: 'F3F4F6',      // Light border
-  gray200: 'E5E7EB',      // Card Border
-  gray400: '9CA3AF',      // Muted text
-  gray500: '6B7280',      // Secondary text
-  white: 'FFFFFF',        // White
-  green600: '16A34A',     // GPS & Success accent
-  amber600: 'D97706',     // Warning / Follow-up accent
-  blue600: '2563EB',      // Info / Meeting accent
+  ink900: 'FF111111',       // Primary Brand Charcoal / Card Inverse / Headers
+  ink800: 'FF1F2937',       // Dark Gray text
+  cream100: 'FFF4F3E4',     // Warm Dashboard Background / Panel Fill / Totals
+  cream200: 'FFEBE9D0',     // Warm border / highlight
+  gray50: 'FFF9FAFB',       // Subtle Zebra Stripe
+  gray100: 'FFF3F4F6',      // Light border / pill fill
+  gray200: 'FFE5E7EB',      // Card Border & Dividers
+  gray400: 'FF9CA3AF',      // Muted icons / captions / placeholders
+  gray500: 'FF6B7280',      // Secondary text
+  white: 'FFFFFFFF',        // White surface / cards
+  green500: 'FF22C55E',     // GPS Verified & Online status (Sole accent per CLC Design System)
+  green600: 'FF16A34A',     // Deep Green accent
 };
 
 const BORDER_THIN: ExcelJS.Border = {
@@ -54,8 +87,8 @@ const BORDER_BOX: Partial<ExcelJS.Borders> = {
   right: BORDER_THIN,
 };
 
-// Font family that excels at both Arabic and Latin typography
-const FONT_FAMILY = 'Segoe UI, Tahoma, Arial, sans-serif';
+// Font family that excels at both Arabic and Latin typography (Single typeface name required by OpenXML)
+const FONT_FAMILY = 'Segoe UI';
 
 /**
  * Detects if a given string contains Arabic characters
@@ -117,6 +150,33 @@ export function formatEntityType(type?: string | null): string {
 }
 
 /**
+ * Format lead status based on language
+ */
+export function formatLeadStatus(status?: string | null, lang: 'ar' | 'en' = 'ar'): string {
+  const s = (status || '').toLowerCase();
+  if (lang === 'en') {
+    switch (s) {
+      case 'new': return 'New Lead';
+      case 'contacted': return 'Contacted';
+      case 'qualified': return 'Qualified';
+      case 'negotiation': return 'Negotiation';
+      case 'won': return 'Deal Won';
+      case 'lost': return 'Lost / Closed';
+      default: return status || '—';
+    }
+  }
+  switch (s) {
+    case 'new': return 'جديد (New)';
+    case 'contacted': return 'تم التواصل (Contacted)';
+    case 'qualified': return 'مؤهل (Qualified)';
+    case 'negotiation': return 'مرحلة التفاوض (Negotiation)';
+    case 'won': return 'تم التعاقد / فوز (Won)';
+    case 'lost': return 'خسارة / مغلق (Lost)';
+    default: return status || '—';
+  }
+}
+
+/**
  * Comprehensive bilingual labels for all Excel content
  */
 function getExcelLabels(lang: 'ar' | 'en') {
@@ -126,6 +186,7 @@ function getExcelLabels(lang: 'ar' | 'en') {
       sheetKpi: 'KPIs - Executive Summary',
       sheetPivot: 'Pivot Analysis',
       sheetDetail: 'Activities Log',
+      sheetAccounts: 'Accounts & Prospects',
       // KPI Sheet - Title
       titleBanner: 'CLC CONTRACTING — FIELD OPERATIONS & ACTIVITIES REPORT',
       subtitleBanner: 'Executive CRM Intelligence • Performance KPIs & Touchpoint Audit',
@@ -227,6 +288,31 @@ function getExcelLabels(lang: 'ar' | 'en') {
       gpsVerified: 'GPS Verified',
       gpsNone: 'No Coordinates',
       openInMaps: 'Open in Google Maps',
+      // Accounts Sheet (Leads & Customers)
+      accountsTitleBanner: 'CLC CONTRACTING — REGISTERED LEADS & CUSTOMERS DIRECTORY',
+      accountsSubtitleBanner: 'Complete Record of Accounts, Contact Details, and Contract Values Registered in the Selected Period',
+      accountsKpiTotal: 'Total Registered Accounts:',
+      accountsKpiLeads: 'New Leads & Opportunities:',
+      accountsKpiCustomers: 'Existing Accounts:',
+      accountsKpiValue: 'Total Estimated Pipeline Value:',
+      accountsHeaderIdx: '#',
+      accountsHeaderType: 'Account Type',
+      accountsHeaderDate: 'Registration Date',
+      accountsHeaderCompany: 'Company / Client Name',
+      accountsHeaderContact: 'Contact Person',
+      accountsHeaderPhone: 'Phone Number',
+      accountsHeaderEmail: 'Email Address',
+      accountsHeaderStatus: 'Pipeline / Account Status',
+      accountsHeaderValue: 'Estimated Value (SAR)',
+      accountsHeaderProjectAddress: 'Project Type / Address',
+      accountsHeaderDistrict: 'District (Riyadh)',
+      accountsHeaderRep: 'Assigned Representative',
+      accountsHeaderSource: 'Source',
+      accountsHeaderNotes: 'Notes & Requirements',
+      leadLabel: 'Lead / Prospect',
+      customerLabel: 'Active Customer',
+      statusActiveCustomer: 'Active Contracted Customer',
+      noAccountsFound: 'No leads or customers registered within the selected date range',
     };
   }
   // Arabic (default)
@@ -234,6 +320,7 @@ function getExcelLabels(lang: 'ar' | 'en') {
     sheetKpi: 'مؤشرات الأداء - KPIs',
     sheetPivot: 'التحليلات المحورية - Pivot',
     sheetDetail: 'سجل العمليات - Activities',
+    sheetAccounts: 'العملاء والفرص - Accounts',
     titleBanner: 'شركة CLC للمقاولات — تقرير العمليات الميدانية والأنشطة',
     subtitleBanner: 'Executive CRM Intelligence • Performance KPIs & Touchpoint Audit • لوحة مؤشرات الأداء والمتابعة',
     metaDateRange: 'الفترة الزمنية للتقرير:',
@@ -282,9 +369,9 @@ function getExcelLabels(lang: 'ar' | 'en') {
     outcomeHeaderCount: 'العدد / Count',
     outcomeHeaderShare: 'النسبة / Share (%)',
     outcomeHeaderCategory: 'التصنيف التشغيلي (Status Category)',
-    outcomePositive: 'إيجابي / تقدم في الصفقة (Positive)',
-    outcomeFollowup: 'متابعة مطلوبة (Follow-up Required)',
-    outcomeNeutral: 'إجرائي / معلوماتي (Neutral)',
+    outcomePositive: 'إيجابي / تقدم في الصفقة',
+    outcomeFollowup: 'متابعة مطلوبة',
+    outcomeNeutral: 'إجرائي / معلوماتي',
     pivotTitle: 'جداول ومصفوفات التحليل المحوري متعدد الأبعاد (Multi-Dimensional Pivot Analysis)',
     pivotATitle: 'المصفوفة المحورية 1: أداء الممثلين الميدانيين وتوزيع الأنشطة ونسبة الـ GPS',
     pivotAHeaderName: 'اسم الممثل / Representative',
@@ -328,6 +415,31 @@ function getExcelLabels(lang: 'ar' | 'en') {
     gpsVerified: 'موثّق بالـ GPS',
     gpsNone: 'بدون إحداثيات',
     openInMaps: 'فتح في خرائط Google',
+    // Accounts Sheet (Leads & Customers)
+    accountsTitleBanner: 'شركة CLC للمقاولات — سجل العملاء والفرص التجارية المسجلة',
+    accountsSubtitleBanner: 'بيانات الحسابات والشركات وجهات الاتصال وقيم العقود المسجلة خلال الفترة المحددة',
+    accountsKpiTotal: 'إجمالي الحسابات المسجلة:',
+    accountsKpiLeads: 'الفرص المحتملة (Leads):',
+    accountsKpiCustomers: 'العملاء الحاليون (Customers):',
+    accountsKpiValue: 'إجمالي القيمة التقديرية:',
+    accountsHeaderIdx: '#',
+    accountsHeaderType: 'نوع الحساب',
+    accountsHeaderDate: 'تاريخ التسجيل',
+    accountsHeaderCompany: 'اسم الشركة أو العميل',
+    accountsHeaderContact: 'الشخص المسؤول / جهة الاتصال',
+    accountsHeaderPhone: 'رقم الهاتف',
+    accountsHeaderEmail: 'البريد الإلكتروني',
+    accountsHeaderStatus: 'حالة الفرصة / الحساب',
+    accountsHeaderValue: 'القيمة التقديرية (ر.س)',
+    accountsHeaderProjectAddress: 'نوع المشروع / العنوان',
+    accountsHeaderDistrict: 'الحي (مدينة الرياض)',
+    accountsHeaderRep: 'الممثل المسؤول',
+    accountsHeaderSource: 'المصدر',
+    accountsHeaderNotes: 'الملاحظات والمتطلبات',
+    leadLabel: 'عميل محتمل (Lead)',
+    customerLabel: 'عميل حالي (Customer)',
+    statusActiveCustomer: 'عميل حالي متعاقد (Active Customer)',
+    noAccountsFound: 'لا يوجد عملاء أو فرص تجارية مسجلة خلال الفترة الزمنية المحددة',
   };
 }
 
@@ -336,7 +448,9 @@ type ExcelLabels = ReturnType<typeof getExcelLabels>;
 export async function generateExecutiveReportWorkbook(
   activities: ReportActivityItem[],
   metadata: ReportExportMetadata = {},
-  lang: 'ar' | 'en' = 'ar'
+  lang: 'ar' | 'en' = 'ar',
+  leads: ReportLeadItem[] = [],
+  customers: ReportCustomerItem[] = []
 ): Promise<Buffer> {
   const L = getExcelLabels(lang);
   const isRTL = lang === 'ar';
@@ -415,23 +529,35 @@ export async function generateExecutiveReportWorkbook(
 
   metaLabels.forEach((rowVals, idx) => {
     const rowNum = 5 + idx;
-    kpiSheet.getRow(rowNum).height = 20;
+    kpiSheet.getRow(rowNum).height = 22;
 
-    kpiSheet.getCell(`B${rowNum}`).value = rowVals[0];
-    kpiSheet.getCell(`B${rowNum}`).font = { name: FONT_FAMILY, size: 9, bold: true, color: { argb: COLORS.gray500 } };
-    kpiSheet.getCell(`B${rowNum}`).alignment = { horizontal: textAlign, readingOrder: readOrder };
+    const cLbl1 = kpiSheet.getCell(`B${rowNum}`);
+    cLbl1.value = rowVals[0];
+    cLbl1.font = { name: FONT_FAMILY, size: 9, bold: true, color: { argb: COLORS.gray500 } };
+    cLbl1.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.gray100 } };
+    cLbl1.border = BORDER_BOX;
+    cLbl1.alignment = { horizontal: textAlign, vertical: 'middle', readingOrder: readOrder, indent: 1 };
     
-    kpiSheet.getCell(`C${rowNum}`).value = rowVals[1];
-    kpiSheet.getCell(`C${rowNum}`).font = { name: FONT_FAMILY, size: 9, bold: true, color: { argb: COLORS.ink900 } };
-    kpiSheet.getCell(`C${rowNum}`).alignment = { horizontal: textAlign, readingOrder: readOrder };
+    const cVal1 = kpiSheet.getCell(`C${rowNum}`);
+    cVal1.value = rowVals[1];
+    cVal1.font = { name: FONT_FAMILY, size: 9, bold: true, color: { argb: COLORS.ink900 } };
+    cVal1.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.white } };
+    cVal1.border = BORDER_BOX;
+    cVal1.alignment = { horizontal: textAlign, vertical: 'middle', readingOrder: readOrder, indent: 1 };
 
-    kpiSheet.getCell(`E${rowNum}`).value = rowVals[2];
-    kpiSheet.getCell(`E${rowNum}`).font = { name: FONT_FAMILY, size: 9, bold: true, color: { argb: COLORS.gray500 } };
-    kpiSheet.getCell(`E${rowNum}`).alignment = { horizontal: textAlign, readingOrder: readOrder };
+    const cLbl2 = kpiSheet.getCell(`E${rowNum}`);
+    cLbl2.value = rowVals[2];
+    cLbl2.font = { name: FONT_FAMILY, size: 9, bold: true, color: { argb: COLORS.gray500 } };
+    cLbl2.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.gray100 } };
+    cLbl2.border = BORDER_BOX;
+    cLbl2.alignment = { horizontal: textAlign, vertical: 'middle', readingOrder: readOrder, indent: 1 };
 
-    kpiSheet.getCell(`F${rowNum}`).value = rowVals[3];
-    kpiSheet.getCell(`F${rowNum}`).font = { name: FONT_FAMILY, size: 9, bold: true, color: { argb: COLORS.ink900 } };
-    kpiSheet.getCell(`F${rowNum}`).alignment = { horizontal: textAlign, readingOrder: readOrder };
+    const cVal2 = kpiSheet.getCell(`F${rowNum}`);
+    cVal2.value = rowVals[3];
+    cVal2.font = { name: FONT_FAMILY, size: 9, bold: true, color: { argb: COLORS.ink900 } };
+    cVal2.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.white } };
+    cVal2.border = BORDER_BOX;
+    cVal2.alignment = { horizontal: textAlign, vertical: 'middle', readingOrder: readOrder, indent: 1 };
   });
 
   // KPI CARDS SECTION (Rows 10-12)
@@ -498,31 +624,40 @@ export async function generateExecutiveReportWorkbook(
     },
   ];
 
-  kpiCards.forEach((card) => {
+  kpiCards.forEach((card, idx) => {
+    const isFeatured = idx === 0; // Featured inverted dark card as per CLC-CRM-Design-System.md
+    const cardBg = isFeatured ? COLORS.ink900 : COLORS.cream100;
+    const titleColor = isFeatured ? COLORS.gray400 : COLORS.gray500;
+    const valColor = isFeatured ? COLORS.white : COLORS.ink900;
+    const subColor = isFeatured ? COLORS.gray400 : COLORS.gray500;
+    const cardBorder: ExcelJS.Border = isFeatured
+      ? { style: 'thin', color: { argb: COLORS.ink900 } }
+      : { style: 'thin', color: { argb: COLORS.cream200 } };
+
     // Title row
     const cTop = kpiSheet.getCell(card.cellTop);
     cTop.value = `${card.title}\n${card.subTitle}`;
-    cTop.font = { name: FONT_FAMILY, size: 8, bold: true, color: { argb: COLORS.gray500 } };
-    cTop.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.cream100 } };
+    cTop.font = { name: FONT_FAMILY, size: 8, bold: true, color: { argb: titleColor } };
+    cTop.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: cardBg } };
     cTop.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true, readingOrder: readOrder };
-    cTop.border = { top: BORDER_THIN, left: BORDER_THIN, right: BORDER_THIN };
+    cTop.border = { top: cardBorder, left: cardBorder, right: cardBorder };
 
     // Value row
     const cVal = kpiSheet.getCell(card.cellVal);
     cVal.value = card.value;
     cVal.numFmt = card.format;
-    cVal.font = { name: FONT_FAMILY, size: 19, bold: true, color: { argb: COLORS.ink900 } };
-    cVal.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.cream100 } };
+    cVal.font = { name: FONT_FAMILY, size: 19, bold: true, color: { argb: valColor } };
+    cVal.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: cardBg } };
     cVal.alignment = { horizontal: 'center', vertical: 'middle' };
-    cVal.border = { left: BORDER_THIN, right: BORDER_THIN };
+    cVal.border = { left: cardBorder, right: cardBorder };
 
     // Subtitle row
     const cSub = kpiSheet.getCell(card.cellSub);
     cSub.value = card.sub;
-    cSub.font = { name: FONT_FAMILY, size: 7.5, italic: true, color: { argb: COLORS.gray500 } };
-    cSub.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.cream100 } };
+    cSub.font = { name: FONT_FAMILY, size: 7.5, italic: true, color: { argb: subColor } };
+    cSub.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: cardBg } };
     cSub.alignment = { horizontal: 'center', vertical: 'middle', readingOrder: readOrder };
-    cSub.border = { bottom: BORDER_THIN, left: BORDER_THIN, right: BORDER_THIN };
+    cSub.border = { bottom: cardBorder, left: cardBorder, right: cardBorder };
   });
 
   kpiSheet.getRow(10).height = 24;
@@ -613,7 +748,7 @@ export async function generateExecutiveReportWorkbook(
       name: FONT_FAMILY,
       size: 9.5,
       bold: act.key === 'visit',
-      color: { argb: act.key === 'visit' ? COLORS.green600 : COLORS.gray400 },
+      color: { argb: act.key === 'visit' ? COLORS.green500 : COLORS.gray400 },
     };
     cGpsRate.alignment = { horizontal: 'center' };
     cGpsRate.fill = rowFill;
@@ -643,7 +778,7 @@ export async function generateExecutiveReportWorkbook(
 
   const cTotShare = kpiSheet.getCell(`D${totRow}`);
   cTotShare.value = 1.0;
-  cTotShare.numFmt = '100.0%';
+  cTotShare.numFmt = '0.0%';
   cTotShare.font = { name: FONT_FAMILY, size: 9.5, bold: true, color: { argb: COLORS.ink900 } };
   cTotShare.alignment = { horizontal: 'center' };
   cTotShare.fill = totFill;
@@ -660,7 +795,7 @@ export async function generateExecutiveReportWorkbook(
   const cTotGpsRate = kpiSheet.getCell(`F${totRow}`);
   cTotGpsRate.value = gpsComplianceRate;
   cTotGpsRate.numFmt = '0.0%';
-  cTotGpsRate.font = { name: FONT_FAMILY, size: 9.5, bold: true, color: { argb: COLORS.green600 } };
+  cTotGpsRate.font = { name: FONT_FAMILY, size: 9.5, bold: true, color: { argb: COLORS.green500 } };
   cTotGpsRate.alignment = { horizontal: 'center' };
   cTotGpsRate.fill = totFill;
   cTotGpsRate.border = { top: BORDER_THIN, bottom: { style: 'double', color: { argb: COLORS.ink900 } }, left: BORDER_THIN, right: BORDER_THIN };
@@ -775,11 +910,15 @@ export async function generateExecutiveReportWorkbook(
     cClass.font = {
       name: FONT_FAMILY,
       size: 8.5,
-      color: { argb: isPositive ? COLORS.green600 : isFollowup ? COLORS.amber600 : COLORS.gray500 },
-      bold: isPositive || isFollowup,
+      color: { argb: COLORS.ink900 },
+      bold: isPositive,
     };
     cClass.alignment = { horizontal: 'center', readingOrder: readOrder };
-    cClass.fill = rowFill;
+    cClass.fill = isPositive
+      ? { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.cream100 } }
+      : isFollowup
+      ? { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.gray100 } }
+      : rowFill;
     cClass.border = BORDER_BOX;
     kpiSheet.getCell(`F${r}`).border = BORDER_BOX;
 
@@ -791,7 +930,7 @@ export async function generateExecutiveReportWorkbook(
   // -------------------------------------------------------------
   const pivotSheet = workbook.addWorksheet(L.sheetPivot, {
     views: [{ showGridLines: true, rightToLeft: isRTL }],
-    properties: { tabColor: { argb: '4F46E5' } },
+    properties: { tabColor: { argb: COLORS.ink900 } },
   });
 
   pivotSheet.columns = [
@@ -841,7 +980,7 @@ export async function generateExecutiveReportWorkbook(
     c.value = h;
     c.font = { name: FONT_FAMILY, size: 9, bold: true, color: { argb: COLORS.white } };
     c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.ink900 } };
-    c.alignment = { horizontal: i === 0 ? 'right' : 'center', vertical: 'middle', readingOrder: 'rtl' };
+    c.alignment = { horizontal: i === 0 ? textAlign : 'center', vertical: 'middle', readingOrder: readOrder };
     c.border = BORDER_BOX;
   });
   pivotSheet.getRow(5).height = 24;
@@ -930,7 +1069,7 @@ export async function generateExecutiveReportWorkbook(
       name: FONT_FAMILY,
       size: 9.5,
       bold: true,
-      color: { argb: emp.visits > 0 && emp.gpsVerified / emp.visits >= 0.8 ? COLORS.green600 : COLORS.amber600 },
+      color: { argb: emp.visits > 0 && emp.gpsVerified / emp.visits >= 0.8 ? COLORS.green500 : COLORS.gray500 },
     };
     cGpsPct.alignment = { horizontal: 'center', vertical: 'middle' };
     cGpsPct.fill = rFill;
@@ -964,7 +1103,7 @@ export async function generateExecutiveReportWorkbook(
   const cTotPivAGpsRate = pivotSheet.getCell(`I${currentPivRow}`);
   cTotPivAGpsRate.value = gpsComplianceRate;
   cTotPivAGpsRate.numFmt = '0.0%';
-  cTotPivAGpsRate.font = { name: FONT_FAMILY, size: 9.5, bold: true, color: { argb: COLORS.green600 } };
+  cTotPivAGpsRate.font = { name: FONT_FAMILY, size: 9.5, bold: true, color: { argb: COLORS.green500 } };
   cTotPivAGpsRate.alignment = { horizontal: 'center', vertical: 'middle' };
   cTotPivAGpsRate.fill = pivATotFill;
   cTotPivAGpsRate.border = { top: BORDER_THIN, bottom: { style: 'double', color: { argb: COLORS.ink900 } }, left: BORDER_THIN, right: BORDER_THIN };
@@ -996,7 +1135,7 @@ export async function generateExecutiveReportWorkbook(
     c.value = h;
     c.font = { name: FONT_FAMILY, size: 9, bold: true, color: { argb: COLORS.white } };
     c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.ink900 } };
-    c.alignment = { horizontal: i === 0 ? 'right' : 'center', vertical: 'middle', readingOrder: 'rtl' };
+    c.alignment = { horizontal: i === 0 ? textAlign : 'center', vertical: 'middle', readingOrder: readOrder };
     c.border = BORDER_BOX;
   });
   pivotSheet.getRow(currentPivRow).height = 24;
@@ -1046,7 +1185,7 @@ export async function generateExecutiveReportWorkbook(
     const cShare = pivotSheet.getCell(`H${currentPivRow}`);
     cShare.value = totalCount > 0 ? tCount / totalCount : 0;
     cShare.numFmt = '0.0%';
-    cShare.font = { name: FONT_FAMILY, size: 9.5, bold: true, color: { argb: COLORS.blue600 } };
+    cShare.font = { name: FONT_FAMILY, size: 9.5, bold: true, color: { argb: COLORS.ink900 } };
     cShare.alignment = { horizontal: 'center', vertical: 'middle' };
     cShare.fill = rFill;
     cShare.border = BORDER_BOX;
@@ -1072,7 +1211,7 @@ export async function generateExecutiveReportWorkbook(
     c.value = h;
     c.font = { name: FONT_FAMILY, size: 9, bold: true, color: { argb: COLORS.white } };
     c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.ink900 } };
-    c.alignment = { horizontal: i === 0 ? 'right' : 'center', vertical: 'middle', readingOrder: 'rtl' };
+    c.alignment = { horizontal: i === 0 ? textAlign : 'center', vertical: 'middle', readingOrder: readOrder };
     c.border = BORDER_BOX;
   });
   pivotSheet.getRow(currentPivRow).height = 24;
@@ -1134,7 +1273,7 @@ export async function generateExecutiveReportWorkbook(
   // -------------------------------------------------------------
   const detailSheet = workbook.addWorksheet(L.sheetDetail, {
     views: [{ state: 'frozen', ySplit: 1, showGridLines: true, rightToLeft: isRTL }],
-    properties: { tabColor: { argb: COLORS.green600 } },
+    properties: { tabColor: { argb: COLORS.ink900 } },
   });
 
   const detailHeaders = [
@@ -1292,7 +1431,7 @@ export async function generateExecutiveReportWorkbook(
       name: FONT_FAMILY,
       size: 8.5,
       bold: true,
-      color: { argb: hasGps ? COLORS.green600 : COLORS.gray400 },
+      color: { argb: hasGps ? COLORS.green500 : COLORS.gray400 },
     };
     cGpsVer.alignment = { horizontal: 'center', vertical: 'middle', readingOrder: readOrder };
 
@@ -1303,7 +1442,7 @@ export async function generateExecutiveReportWorkbook(
         text: L.openInMaps,
         hyperlink: `https://www.google.com/maps?q=${act.latitude},${act.longitude}`,
       };
-      cMap.font = { name: FONT_FAMILY, size: 9, underline: true, color: { argb: COLORS.blue600 } };
+      cMap.font = { name: FONT_FAMILY, size: 9, underline: true, color: { argb: COLORS.ink900 } };
     } else {
       cMap.value = '—';
       cMap.font = { name: FONT_FAMILY, size: 9, color: { argb: COLORS.gray400 } };
@@ -1319,11 +1458,336 @@ export async function generateExecutiveReportWorkbook(
     }
   });
 
-  // Enable AutoFilter on Detailed Activities
-  detailSheet.autoFilter = {
-    from: { row: 1, column: 1 },
-    to: { row: Math.max(activities.length + 1, 2), column: 14 },
-  };
+  // Enable AutoFilter on Detailed Activities only if data exists
+  if (activities.length > 0) {
+    detailSheet.autoFilter = {
+      from: { row: 1, column: 1 },
+      to: { row: activities.length + 1, column: 14 },
+    };
+  }
+
+  // -------------------------------------------------------------
+  // SHEET 4: سجل العملاء والفرص التجارية (Leads & Customers Directory)
+  // -------------------------------------------------------------
+  const accountsSheet = workbook.addWorksheet(L.sheetAccounts, {
+    views: [{ state: 'frozen', ySplit: 6, showGridLines: true, rightToLeft: isRTL }],
+    properties: { tabColor: { argb: COLORS.ink900 } },
+  });
+
+  accountsSheet.columns = [
+    { width: 4 },  // A Margin
+    { width: 8 },  // B #
+    { width: 22 }, // C Account Type
+    { width: 20 }, // D Date Registered
+    { width: 34 }, // E Company Name
+    { width: 24 }, // F Contact Person
+    { width: 20 }, // G Phone
+    { width: 28 }, // H Email
+    { width: 24 }, // I Status
+    { width: 22 }, // J Estimated Value
+    { width: 28 }, // K Project Type / Address
+    { width: 22 }, // L District
+    { width: 26 }, // M Assigned Representative
+    { width: 20 }, // N Source
+    { width: 45 }, // O Notes
+    { width: 4 },  // P Margin
+  ];
+
+  // Title Banner
+  accountsSheet.mergeCells('B2:O2');
+  const accTitleCell = accountsSheet.getCell('B2');
+  accTitleCell.value = L.accountsTitleBanner;
+  accTitleCell.font = { name: FONT_FAMILY, size: 14, bold: true, color: { argb: COLORS.white } };
+  accTitleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.ink900 } };
+  accTitleCell.alignment = { vertical: 'middle', horizontal: textAlign, readingOrder: readOrder, indent: 1 };
+  accountsSheet.getRow(2).height = 36;
+
+  // Subtitle Banner
+  accountsSheet.mergeCells('B3:O3');
+  const accSubCell = accountsSheet.getCell('B3');
+  accSubCell.value = L.accountsSubtitleBanner;
+  accSubCell.font = { name: FONT_FAMILY, size: 9, italic: true, color: { argb: COLORS.gray400 } };
+  accSubCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.ink900 } };
+  accSubCell.alignment = { vertical: 'top', horizontal: textAlign, readingOrder: readOrder, indent: 1 };
+  accountsSheet.getRow(3).height = 22;
+
+  // Combine and sort leads & customers
+  interface UnifiedAccountItem {
+    id: string;
+    type: 'lead' | 'customer';
+    created_at: string;
+    company_name: string;
+    contact_person: string;
+    phone: string;
+    email: string;
+    status: string;
+    estimated_value: number | null;
+    project_or_address: string;
+    district: string;
+    assigned_rep: string;
+    source: string;
+    notes: string;
+  }
+
+  const allAccounts: UnifiedAccountItem[] = [];
+
+  (leads || []).forEach((lead) => {
+    const distName = (isRTL ? (lead.district_name_ar || lead.district_name_en) : (lead.district_name_en || lead.district_name_ar)) || '—';
+    allAccounts.push({
+      id: lead.id,
+      type: 'lead',
+      created_at: lead.created_at,
+      company_name: lead.company_name || '—',
+      contact_person: lead.contact_person || '—',
+      phone: lead.phone || '—',
+      email: lead.email || '—',
+      status: formatLeadStatus(lead.status, lang),
+      estimated_value: lead.estimated_value != null ? lead.estimated_value : null,
+      project_or_address: lead.project_type || '—',
+      district: distName,
+      assigned_rep: lead.assigned_to_name || '—',
+      source: lead.source || '—',
+      notes: lead.notes || '—',
+    });
+  });
+
+  (customers || []).forEach((cust) => {
+    const distName = (isRTL ? (cust.district_name_ar || cust.district_name_en) : (cust.district_name_en || cust.district_name_ar)) || '—';
+    allAccounts.push({
+      id: cust.id,
+      type: 'customer',
+      created_at: cust.created_at,
+      company_name: cust.company_name || '—',
+      contact_person: cust.contact_person || '—',
+      phone: cust.phone || '—',
+      email: cust.email || '—',
+      status: L.statusActiveCustomer,
+      estimated_value: null,
+      project_or_address: cust.address || '—',
+      district: distName,
+      assigned_rep: cust.assigned_to_name || '—',
+      source: cust.customer_since ? (isRTL ? `عميل منذ ${cust.customer_since}` : `Customer since ${cust.customer_since}`) : '—',
+      notes: '—',
+    });
+  });
+
+  allAccounts.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  const totalPipelineVal = (leads || []).reduce((sum, l) => sum + (l.estimated_value || 0), 0);
+
+  // Summary Pill Row (Row 5)
+  const pillFill: ExcelJS.Fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.cream100 } };
+
+  accountsSheet.mergeCells('B5:D5');
+  const p1 = accountsSheet.getCell('B5');
+  p1.value = `${L.accountsKpiTotal} ${allAccounts.length}`;
+  p1.font = { name: FONT_FAMILY, size: 9, bold: true, color: { argb: COLORS.ink900 } };
+  p1.alignment = { horizontal: 'center', vertical: 'middle', readingOrder: readOrder };
+  p1.fill = pillFill;
+  p1.border = BORDER_BOX;
+
+  accountsSheet.mergeCells('E5:G5');
+  const p2 = accountsSheet.getCell('E5');
+  p2.value = `${L.accountsKpiLeads} ${leads.length}`;
+  p2.font = { name: FONT_FAMILY, size: 9, bold: true, color: { argb: COLORS.ink900 } };
+  p2.alignment = { horizontal: 'center', vertical: 'middle', readingOrder: readOrder };
+  p2.fill = pillFill;
+  p2.border = BORDER_BOX;
+
+  accountsSheet.mergeCells('H5:J5');
+  const p3 = accountsSheet.getCell('H5');
+  p3.value = `${L.accountsKpiCustomers} ${customers.length}`;
+  p3.font = { name: FONT_FAMILY, size: 9, bold: true, color: { argb: COLORS.ink900 } };
+  p3.alignment = { horizontal: 'center', vertical: 'middle', readingOrder: readOrder };
+  p3.fill = pillFill;
+  p3.border = BORDER_BOX;
+
+  accountsSheet.mergeCells('K5:O5');
+  const p4 = accountsSheet.getCell('K5');
+  p4.value = `${L.accountsKpiValue} ${totalPipelineVal.toLocaleString()} SAR`;
+  p4.font = { name: FONT_FAMILY, size: 9, bold: true, color: { argb: COLORS.ink900 } };
+  p4.alignment = { horizontal: 'center', vertical: 'middle', readingOrder: readOrder };
+  p4.fill = pillFill;
+  p4.border = BORDER_BOX;
+
+  accountsSheet.getRow(5).height = 24;
+
+  // Header Row (Row 6)
+  const accHeaders = [
+    L.accountsHeaderIdx,
+    L.accountsHeaderType,
+    L.accountsHeaderDate,
+    L.accountsHeaderCompany,
+    L.accountsHeaderContact,
+    L.accountsHeaderPhone,
+    L.accountsHeaderEmail,
+    L.accountsHeaderStatus,
+    L.accountsHeaderValue,
+    L.accountsHeaderProjectAddress,
+    L.accountsHeaderDistrict,
+    L.accountsHeaderRep,
+    L.accountsHeaderSource,
+    L.accountsHeaderNotes,
+  ];
+
+  const accHeadRow = accountsSheet.getRow(6);
+  accHeadRow.height = 28;
+
+  accHeaders.forEach((h, i) => {
+    const c = accHeadRow.getCell(i + 2);
+    c.value = h;
+    c.font = { name: FONT_FAMILY, size: 9, bold: true, color: { argb: COLORS.white } };
+    c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.ink900 } };
+    c.alignment = { horizontal: 'center', vertical: 'middle', readingOrder: readOrder };
+    c.border = BORDER_BOX;
+  });
+
+  // Populate Accounts Data
+  if (allAccounts.length === 0) {
+    accountsSheet.mergeCells('B7:O7');
+    const emptyCell = accountsSheet.getCell('B7');
+    emptyCell.value = L.noAccountsFound;
+    emptyCell.font = { name: FONT_FAMILY, size: 9.5, italic: true, color: { argb: COLORS.gray400 } };
+    emptyCell.alignment = { horizontal: 'center', vertical: 'middle', readingOrder: readOrder };
+    emptyCell.border = BORDER_BOX;
+    accountsSheet.getRow(7).height = 30;
+  } else {
+    allAccounts.forEach((acc, idx) => {
+      const rNum = idx + 7;
+      const isZebra = idx % 2 === 1;
+      const rFill: ExcelJS.Fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: isZebra ? COLORS.gray50 : COLORS.white },
+      };
+
+      const row = accountsSheet.getRow(rNum);
+      row.height = 24;
+
+      const dateStr = acc.created_at
+        ? new Date(acc.created_at).toISOString().replace('T', ' ').substring(0, 16)
+        : '';
+
+      // B: Index
+      const cIdx = row.getCell(2);
+      cIdx.value = idx + 1;
+      cIdx.alignment = { horizontal: 'center', vertical: 'middle' };
+
+      // C: Type
+      const cType = row.getCell(3);
+      cType.value = acc.type === 'lead' ? L.leadLabel : L.customerLabel;
+      cType.font = { name: FONT_FAMILY, size: 8.5, bold: true, color: { argb: COLORS.ink900 } };
+      cType.alignment = { horizontal: 'center', vertical: 'middle', readingOrder: readOrder };
+
+      // D: Date
+      const cDate = row.getCell(4);
+      cDate.value = dateStr;
+      cDate.alignment = { horizontal: 'center', vertical: 'middle' };
+
+      // E: Company
+      const cComp = row.getCell(5);
+      cComp.value = acc.company_name;
+      cComp.font = { name: FONT_FAMILY, size: 9.5, bold: true, color: { argb: COLORS.ink900 } };
+      cComp.alignment = {
+        vertical: 'middle',
+        horizontal: isArabicText(acc.company_name) ? 'right' : 'left',
+        readingOrder: isArabicText(acc.company_name) ? 'rtl' : 'ltr',
+      };
+
+      // F: Contact Person
+      const cContact = row.getCell(6);
+      cContact.value = acc.contact_person;
+      cContact.alignment = {
+        vertical: 'middle',
+        horizontal: isArabicText(acc.contact_person) ? 'right' : 'left',
+        readingOrder: isArabicText(acc.contact_person) ? 'rtl' : 'ltr',
+      };
+
+      // G: Phone
+      const cPhone = row.getCell(7);
+      cPhone.value = acc.phone;
+      cPhone.alignment = { horizontal: 'center', vertical: 'middle' };
+      cPhone.font = { name: FONT_FAMILY, size: 9, color: { argb: COLORS.ink900 } };
+
+      // H: Email
+      const cEmail = row.getCell(8);
+      cEmail.value = acc.email;
+      cEmail.alignment = { horizontal: 'left', vertical: 'middle' };
+      cEmail.font = { name: FONT_FAMILY, size: 8.5, color: { argb: COLORS.gray500 } };
+
+      // I: Status
+      const cStatus = row.getCell(9);
+      cStatus.value = acc.status;
+      cStatus.font = { name: FONT_FAMILY, size: 8.5, bold: true, color: { argb: COLORS.ink900 } };
+      cStatus.alignment = { horizontal: 'center', vertical: 'middle', readingOrder: readOrder };
+
+      // J: Estimated Value
+      const cVal = row.getCell(10);
+      if (acc.estimated_value != null) {
+        cVal.value = acc.estimated_value;
+        cVal.numFmt = '#,##0';
+        cVal.font = { name: FONT_FAMILY, size: 9, bold: true, color: { argb: COLORS.ink900 } };
+      } else {
+        cVal.value = '—';
+        cVal.font = { name: FONT_FAMILY, size: 9, color: { argb: COLORS.gray400 } };
+      }
+      cVal.alignment = { horizontal: 'center', vertical: 'middle' };
+
+      // K: Project / Address
+      const cProj = row.getCell(11);
+      cProj.value = acc.project_or_address;
+      cProj.alignment = {
+        vertical: 'middle',
+        horizontal: isArabicText(acc.project_or_address) ? 'right' : 'left',
+        readingOrder: isArabicText(acc.project_or_address) ? 'rtl' : 'ltr',
+      };
+
+      // L: District
+      const cDist = row.getCell(12);
+      cDist.value = acc.district;
+      cDist.alignment = { horizontal: 'center', vertical: 'middle', readingOrder: readOrder };
+
+      // M: Rep
+      const cRep = row.getCell(13);
+      cRep.value = acc.assigned_rep;
+      cRep.alignment = {
+        vertical: 'middle',
+        horizontal: isArabicText(acc.assigned_rep) ? 'right' : 'left',
+        readingOrder: isArabicText(acc.assigned_rep) ? 'rtl' : 'ltr',
+      };
+
+      // N: Source
+      const cSrc = row.getCell(14);
+      cSrc.value = acc.source;
+      cSrc.alignment = { horizontal: 'center', vertical: 'middle', readingOrder: readOrder };
+      cSrc.font = { name: FONT_FAMILY, size: 8.5, color: { argb: COLORS.gray500 } };
+
+      // O: Notes
+      const cNotes = row.getCell(15);
+      cNotes.value = acc.notes;
+      cNotes.alignment = {
+        vertical: 'middle',
+        horizontal: isArabicText(acc.notes) ? 'right' : 'left',
+        readingOrder: isArabicText(acc.notes) ? 'rtl' : 'ltr',
+        wrapText: true,
+      };
+      cNotes.font = { name: FONT_FAMILY, size: 8.5, color: { argb: COLORS.ink800 } };
+
+      for (let c = 2; c <= 15; c++) {
+        const cell = row.getCell(c);
+        if (!cell.fill) cell.fill = rFill;
+        cell.border = BORDER_BOX;
+        if (!cell.font) cell.font = { name: FONT_FAMILY, size: 9, color: { argb: COLORS.ink900 } };
+      }
+    });
+
+    if (allAccounts.length > 0) {
+      accountsSheet.autoFilter = {
+        from: { row: 6, column: 2 },
+        to: { row: allAccounts.length + 6, column: 15 },
+      };
+    }
+  }
 
   const buffer = await workbook.xlsx.writeBuffer();
   return Buffer.from(buffer);

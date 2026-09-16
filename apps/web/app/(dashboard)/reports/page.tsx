@@ -15,6 +15,7 @@ import {
   Users,
   CheckCircle,
   X,
+  ChevronDown,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { CustomSelect } from '@/components/ui/CustomSelect';
@@ -48,6 +49,18 @@ export default function ReportsPage() {
   const [initialLoading, setInitialLoading] = useState(true);
   const [isRefetching, setIsRefetching] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const exportMenuRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
+        setShowExportMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Cached reference metadata to avoid re-querying static tables on every filter switch
   const metadataCacheRef = React.useRef<{
@@ -232,9 +245,10 @@ export default function ReportsPage() {
   const emailCount = filteredActivities.filter((a) => a.activity_type === 'email').length;
 
   // Helper for direct client-side CSV download
-  const downloadCsvLocally = (items: EnrichedActivity[]) => {
+  const downloadCsvLocally = (items: EnrichedActivity[], lang: 'ar' | 'en' = 'ar') => {
+    const isAr = lang === 'ar';
     const headers =
-      language === 'ar'
+      isAr
         ? [
             'التاريخ والوقت',
             'اسم الممثل',
@@ -262,11 +276,11 @@ export default function ReportsPage() {
 
     const csvLines = [headers.join(',')];
     for (const a of items) {
-      const typeLabel = formatActivityType(a.activity_type);
+      const typeLabel = isAr ? formatActivityType(a.activity_type) : a.activity_type.toUpperCase();
       const entityTypeLabel =
         a.related_entity_type === 'lead'
-          ? (language === 'ar' ? 'فرصة محتملة' : 'Lead')
-          : (language === 'ar' ? 'عميل' : 'Customer');
+          ? (isAr ? 'فرصة محتملة' : 'Lead')
+          : (isAr ? 'عميل' : 'Customer');
 
       csvLines.push(
         [
@@ -291,7 +305,7 @@ export default function ReportsPage() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `CLC-CRM-Report-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `CLC-CRM-Report-${lang.toUpperCase()}-${new Date().toISOString().split('T')[0]}.csv`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -299,29 +313,36 @@ export default function ReportsPage() {
   };
 
   // Export Trigger
-  const handleExportExcel = async (exportFormat: 'xlsx' | 'csv' = 'xlsx') => {
+  const handleExportExcel = async (exportFormat: 'xlsx' | 'csv' = 'xlsx', lang: 'ar' | 'en' = 'ar') => {
     setIsExporting(true);
+    setShowExportMenu(false);
     try {
       let startDate: string | null = null;
       let endDate: string | null = null;
       const now = new Date();
-      let dateLabel = 'All Recorded History';
+      let dateLabel = lang === 'en' ? 'All Recorded History' : 'كامل السجل التاريخي';
 
       if (dateRange === 'daily') {
         const startOfDay = new Date(now);
         startOfDay.setHours(0, 0, 0, 0);
         startDate = startOfDay.toISOString();
-        dateLabel = `Daily Report (${now.toLocaleDateString()})`;
+        dateLabel = lang === 'en'
+          ? `Daily Report (${now.toLocaleDateString('en-US')})`
+          : `تقرير يومي (${now.toLocaleDateString('ar-SA')})`;
       } else if (dateRange === 'weekly') {
         const weekAgo = new Date(now);
         weekAgo.setDate(now.getDate() - 7);
         startDate = weekAgo.toISOString();
-        dateLabel = `Weekly Report (${weekAgo.toLocaleDateString()} to ${now.toLocaleDateString()})`;
+        dateLabel = lang === 'en'
+          ? `Weekly Report (${weekAgo.toLocaleDateString('en-US')} to ${now.toLocaleDateString('en-US')})`
+          : `تقرير أسبوعي (${weekAgo.toLocaleDateString('ar-SA')} إلى ${now.toLocaleDateString('ar-SA')})`;
       } else if (dateRange === 'monthly') {
         const monthAgo = new Date(now);
         monthAgo.setDate(now.getDate() - 30);
         startDate = monthAgo.toISOString();
-        dateLabel = `Monthly Report (${monthAgo.toLocaleDateString()} to ${now.toLocaleDateString()})`;
+        dateLabel = lang === 'en'
+          ? `Monthly Report (${monthAgo.toLocaleDateString('en-US')} to ${now.toLocaleDateString('en-US')})`
+          : `تقرير شهري (${monthAgo.toLocaleDateString('ar-SA')} إلى ${now.toLocaleDateString('ar-SA')})`;
       } else if (dateRange === 'custom') {
         if (customStartDate) {
           const s = new Date(customStartDate);
@@ -335,7 +356,9 @@ export default function ReportsPage() {
         }
         const fromStr = customStartDate || '...';
         const toStr = customEndDate || '...';
-        dateLabel = `Custom Report (${fromStr} to ${toStr})`;
+        dateLabel = lang === 'en'
+          ? `Custom Report (${fromStr} to ${toStr})`
+          : `تقرير مخصص (من ${fromStr} إلى ${toStr})`;
       }
 
       // 1. Retrieve session access token for Bearer auth
@@ -356,6 +379,7 @@ export default function ReportsPage() {
           employee_id: isManager && selectedEmployee !== 'all' ? selectedEmployee : undefined,
           format: exportFormat,
           date_label: dateLabel,
+          lang,
         }),
       });
 
@@ -366,8 +390,8 @@ export default function ReportsPage() {
         a.href = url;
         const dateToday = new Date().toISOString().split('T')[0];
         a.download = exportFormat === 'xlsx'
-          ? `CLC-CRM-Executive-Report-${dateToday}.xlsx`
-          : `CLC-CRM-Report-${dateToday}.csv`;
+          ? `CLC-CRM-Executive-Report-${lang.toUpperCase()}-${dateToday}.xlsx`
+          : `CLC-CRM-Report-${lang.toUpperCase()}-${dateToday}.csv`;
         document.body.appendChild(a);
         a.click();
         a.remove();
@@ -377,10 +401,10 @@ export default function ReportsPage() {
 
       // If server returned non-200, fallback gracefully to client-side CSV download
       console.warn('Server export returned status', res.status, '- downloading client-side CSV.');
-      downloadCsvLocally(filteredActivities);
+      downloadCsvLocally(filteredActivities, lang);
     } catch (err) {
       console.warn('Server export request failed, falling back to client-side CSV download:', err);
-      downloadCsvLocally(filteredActivities);
+      downloadCsvLocally(filteredActivities, lang);
     } finally {
       setIsExporting(false);
     }
@@ -413,74 +437,113 @@ export default function ReportsPage() {
             <span>{t('print_pdf')}</span>
           </button>
 
-          <button
-            onClick={() => handleExportExcel('xlsx')}
-            disabled={isExporting}
-            className="inline-flex items-center gap-2 bg-ink-900 text-white px-4 py-2 rounded-button text-sm font-semibold hover:bg-black transition-colors disabled:opacity-60 shadow-sm"
-          >
-            <FileSpreadsheet className="h-4 w-4" />
-            <span>{isExporting ? t('generating_report') : t('export_excel')}</span>
-          </button>
+          <div className="relative" ref={exportMenuRef}>
+            <button
+              type="button"
+              onClick={() => setShowExportMenu((prev) => !prev)}
+              disabled={isExporting}
+              className="inline-flex items-center gap-2 bg-ink-900 text-white px-4 py-2 rounded-button text-sm font-semibold hover:bg-black transition-colors disabled:opacity-60 shadow-sm"
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              <span>{isExporting ? t('generating_report') : t('export_excel')}</span>
+              <ChevronDown className={`h-4 w-4 text-gray-300 transition-transform duration-200 ${showExportMenu ? 'rotate-180' : ''}`} />
+            </button>
+
+            {showExportMenu && (
+              <div
+                className={`absolute ${isRTL ? 'left-0' : 'right-0'} mt-2 w-56 bg-white rounded-card shadow-lg border border-gray-200 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100`}
+              >
+                <button
+                  type="button"
+                  onClick={() => handleExportExcel('xlsx', 'ar')}
+                  className="w-full text-start px-4 py-2.5 text-sm text-ink-900 hover:bg-surfaceSubtle flex items-center justify-between transition-colors"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+                    <span className="font-medium text-ink-900">Download in Ar</span>
+                  </div>
+                  <span className="text-xs text-gray-600 bg-surfaceSubtle border border-gray-200 px-1.5 py-0.5 rounded font-mono">عربي</span>
+                </button>
+
+                <div className="h-px bg-gray-100 my-1" />
+
+                <button
+                  type="button"
+                  onClick={() => handleExportExcel('xlsx', 'en')}
+                  className="w-full text-start px-4 py-2.5 text-sm text-ink-900 hover:bg-surfaceSubtle flex items-center justify-between transition-colors"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <FileSpreadsheet className="h-4 w-4 text-blue-600" />
+                    <span className="font-medium text-ink-900">Download in Eng</span>
+                  </div>
+                  <span className="text-xs text-gray-600 bg-surfaceSubtle border border-gray-200 px-1.5 py-0.5 rounded font-mono">EN</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {/* FILTER CONTROLS BAR */}
       <div className="w-full bg-white rounded-card border border-gray-200 p-5 space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          {/* Date Range Tabs */}
-          <div className="flex items-center gap-1 bg-surfaceSubtle p-1 rounded-button border border-gray-200">
-            {(
-              [
-                { id: 'daily', label: t('range_daily') },
-                { id: 'weekly', label: t('range_weekly') },
-                { id: 'monthly', label: t('range_monthly') },
-                { id: 'all', label: t('range_all') },
-                { id: 'custom', label: t('range_custom') },
-              ] as { id: 'daily' | 'weekly' | 'monthly' | 'all' | 'custom'; label: string }[]
-            ).map((tItem) => (
-              <button
-                key={tItem.id}
-                onClick={() => setDateRange(tItem.id)}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-button border transition-all duration-150 ${
-                  dateRange === tItem.id
-                    ? 'bg-white text-ink-900 border-gray-200 shadow-none'
-                    : 'border-transparent text-gray-500 hover:text-ink-900'
-                }`}
-              >
-                {tItem.label}
-              </button>
-            ))}
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          {/* Left Column: Date Range Tabs & Custom Date Pickers */}
+          <div className="flex flex-col gap-2.5">
+            {/* Date Range Tabs */}
+            <div className="flex items-center gap-1 bg-surfaceSubtle p-1 rounded-button border border-gray-200 self-start">
+              {(
+                [
+                  { id: 'daily', label: t('range_daily') },
+                  { id: 'weekly', label: t('range_weekly') },
+                  { id: 'monthly', label: t('range_monthly') },
+                  { id: 'all', label: t('range_all') },
+                  { id: 'custom', label: t('range_custom') },
+                ] as { id: 'daily' | 'weekly' | 'monthly' | 'all' | 'custom'; label: string }[]
+              ).map((tItem) => (
+                <button
+                  key={tItem.id}
+                  onClick={() => setDateRange(tItem.id)}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-button border transition-all duration-150 ${
+                    dateRange === tItem.id
+                      ? 'bg-white text-ink-900 border-gray-200 shadow-none'
+                      : 'border-transparent text-gray-500 hover:text-ink-900'
+                  }`}
+                >
+                  {tItem.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Custom Date Range Pickers — visible directly underneath the tabs bar */}
+            {dateRange === 'custom' && (
+              <div className="flex flex-wrap items-center gap-3 animate-in fade-in-0 duration-150 pt-0.5">
+                <div className="flex items-center gap-1.5">
+                  <label className="text-xs font-semibold text-gray-400">{t('custom_from')}:</label>
+                  <input
+                    type="date"
+                    value={customStartDate}
+                    onChange={(e) => setCustomStartDate(e.target.value)}
+                    max={customEndDate || undefined}
+                    className="px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-button text-ink-900 focus:outline-none focus:border-ink-900 transition-colors shadow-none"
+                  />
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <label className="text-xs font-semibold text-gray-400">{t('custom_to')}:</label>
+                  <input
+                    type="date"
+                    value={customEndDate}
+                    onChange={(e) => setCustomEndDate(e.target.value)}
+                    min={customStartDate || undefined}
+                    className="px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-button text-ink-900 focus:outline-none focus:border-ink-900 transition-colors shadow-none"
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Custom Date Range Pickers — visible only when Custom tab is active */}
-          {dateRange === 'custom' && (
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1.5">
-                <label className="text-xs font-semibold text-gray-400">{t('custom_from')}:</label>
-                <input
-                  type="date"
-                  value={customStartDate}
-                  onChange={(e) => setCustomStartDate(e.target.value)}
-                  max={customEndDate || undefined}
-                  className="px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-button text-ink-900 focus:outline-none focus:border-ink-900 transition-colors"
-                />
-              </div>
-              <div className="flex items-center gap-1.5">
-                <label className="text-xs font-semibold text-gray-400">{t('custom_to')}:</label>
-                <input
-                  type="date"
-                  value={customEndDate}
-                  onChange={(e) => setCustomEndDate(e.target.value)}
-                  min={customStartDate || undefined}
-                  className="px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-button text-ink-900 focus:outline-none focus:border-ink-900 transition-colors"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Representative Filter (Manager/Supervisor/Admin) */}
+          {/* Representative Filter (Manager/Supervisor/Admin) — remains fixed in place on the right */}
           {isManager && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 pt-0.5">
               <span className="text-xs font-semibold text-gray-400">{t('representative')}:</span>
               <CustomSelect
                 value={selectedEmployee}
