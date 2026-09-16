@@ -275,7 +275,11 @@ create policy "leads_update" on public.leads
 drop policy if exists "leads_delete" on public.leads;
 create policy "leads_delete" on public.leads
   for delete using (
-    is_admin()
+    (
+      assigned_to = auth.uid()
+      or is_admin()
+    )
+    and (created_at >= (now() - interval '24 hours'))
   );
 
 -- ------------------------------------------------------------------------------
@@ -310,7 +314,11 @@ create policy "customers_update" on public.customers
 drop policy if exists "customers_delete" on public.customers;
 create policy "customers_delete" on public.customers
   for delete using (
-    is_admin()
+    (
+      assigned_to = auth.uid()
+      or is_admin()
+    )
+    and (created_at >= (now() - interval '24 hours'))
   );
 
 -- ------------------------------------------------------------------------------

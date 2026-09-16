@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -12,14 +12,19 @@ import {
   MapPin,
   Calendar,
   ExternalLink,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useLanguage } from '@/lib/language-context';
 import { ActivityTimeline } from '@/components/ActivityTimeline';
+import { EditCustomerModal } from '@/components/EditCustomerModal';
+import { DeleteConfirmModal } from '@/components/DeleteConfirmModal';
 import type { Customer, District, Profile, Activity } from '@clc/shared';
 
 export default function CustomerDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const customerId = params.id as string;
   const { t, formatDistrict } = useLanguage();
   const supabase = createClient();
@@ -29,6 +34,8 @@ export default function CustomerDetailPage() {
   const [assignedEmployee, setAssignedEmployee] = useState<Profile | null>(null);
   const [activities, setActivities] = useState<(Activity & { employee?: { full_name: string } })[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const loadCustomerData = async () => {
     try {
@@ -130,18 +137,57 @@ export default function CustomerDetailPage() {
           <span>{t('back_to_customers')}</span>
         </Link>
 
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-card bg-gray-50 border border-gray-200 flex items-center justify-center text-ink-900">
-            <Building2 className="h-5 w-5" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-card bg-gray-50 border border-gray-200 flex items-center justify-center text-ink-900">
+              <Building2 className="h-5 w-5" />
+            </div>
+            <div>
+              <h1 className="text-xl font-semibold text-ink-900">
+                {customer.company_name}
+              </h1>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {t('th_customer_since')}: {customer.customer_since} · {t('th_account_manager')}:{' '}
+                {assignedEmployee ? assignedEmployee.full_name : t('unassigned')}
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-semibold text-ink-900">
-              {customer.company_name}
-            </h1>
-            <p className="text-xs text-gray-500 mt-0.5">
-              {t('th_customer_since')}: {customer.customer_since} · {t('th_account_manager')}:{' '}
-              {assignedEmployee ? assignedEmployee.full_name : t('unassigned')}
-            </p>
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2">
+            {/* Edit Customer Button (Always active) */}
+            <button
+              onClick={() => setIsEditModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-200 text-ink-900 rounded-button text-xs font-semibold hover:bg-gray-50 transition-colors"
+            >
+              <Pencil className="h-3.5 w-3.5 text-gray-500" />
+              <span>{t('edit_customer')}</span>
+            </button>
+
+            {/* Delete Customer Button (Active only within 24 hours of creation) */}
+            {(() => {
+              const isWithin24Hours =
+                Date.now() - new Date(customer.created_at).getTime() < 24 * 60 * 60 * 1000;
+
+              return isWithin24Hours ? (
+                <button
+                  onClick={() => setIsDeleteModalOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-white border border-red-200 text-red-600 rounded-button text-xs font-semibold hover:bg-red-50 transition-colors"
+                  title={t('delete_customer')}
+                >
+                  <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                  <span>{t('delete_customer')}</span>
+                </button>
+              ) : (
+                <div
+                  className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 border border-gray-200 text-gray-400 rounded-button text-xs font-medium cursor-not-allowed opacity-60"
+                  title={t('delete_time_expired')}
+                >
+                  <Trash2 className="h-3.5 w-3.5 text-gray-300" />
+                  <span className="line-through">{t('delete_customer')}</span>
+                </div>
+              );
+            })()}
           </div>
         </div>
       </header>
@@ -242,6 +288,25 @@ export default function CustomerDetailPage() {
           />
         </div>
       </main>
+
+      {/* Edit Customer Modal */}
+      <EditCustomerModal
+        isOpen={isEditModalOpen}
+        customer={customer}
+        onClose={() => setIsEditModalOpen(false)}
+        onUpdated={loadCustomerData}
+      />
+
+      {/* Delete Customer Modal (24h restricted) */}
+      <DeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        title={customer.company_name}
+        createdAt={customer.created_at}
+        entityType="customer"
+        entityId={customer.id}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onDeleted={() => router.push('/customers')}
+      />
     </div>
   );
 }

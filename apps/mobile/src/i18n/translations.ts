@@ -45,6 +45,20 @@ export const translations = {
     active: 'Active',
     inactive: 'Inactive',
 
+    // Edit & 24-Hour Delete Actions
+    edit_lead: 'Edit Lead',
+    edit_customer: 'Edit Customer',
+    delete_lead: 'Delete Lead',
+    delete_customer: 'Delete Customer',
+    delete_confirm_title: 'Confirm Permanent Deletion',
+    delete_confirm_msg: 'Are you sure you want to permanently delete this record from the database? This action cannot be undone.',
+    delete_within_24h_only: 'Deletion is only available within 24 hours of creation.',
+    delete_time_expired: 'Deletion period expired (only available within 24 hours of creation).',
+    deleted_successfully: 'Deleted successfully',
+    updated_successfully: 'Updated successfully',
+    time_left_to_delete: 'Time left to delete',
+    hours_left: 'hours left',
+
     // Navigation & Tabs
     nav_dashboard: 'Dashboard',
     nav_leads: 'Leads',
@@ -58,10 +72,15 @@ export const translations = {
     nav_profile: 'Profile',
 
     // Auth & Account
+    auth_title: 'Sign in to CLC CRM',
+    auth_subtitle: 'Management & Field Tracking Portal',
     auth_sign_in: 'Sign In',
     auth_sign_out: 'Sign Out',
     auth_email: 'Email address',
+    auth_placeholder_email: 'Type your Email address',
     auth_password: 'Password',
+    auth_placeholder_password: 'Enter your password',
+    auth_remember_me: 'Remember me',
     auth_signing_in: 'Signing in...',
     auth_signed_out_confirm: 'Are you sure you want to sign out?',
     auth_access_restricted: 'Access Restricted',
@@ -181,7 +200,6 @@ export const translations = {
     quick_log_submit_button: 'Submit Field Activity',
     quick_log_success: 'Field activity logged successfully!',
     quick_log_offline_saved: 'Saved offline. Will sync when online.',
-    offline_saved: 'Saved Offline',
 
     // Daily Report Screen
     report_title: 'Daily Field Report',
@@ -431,6 +449,20 @@ export const translations = {
     active: 'نشط',
     inactive: 'غير نشط',
 
+    // Edit & 24-Hour Delete Actions
+    edit_lead: 'تعديل بيانات الفرصة',
+    edit_customer: 'تعديل بيانات العميل',
+    delete_lead: 'حذف الفرصة',
+    delete_customer: 'حذف العميل',
+    delete_confirm_title: 'تأكيد الحذف النهائي',
+    delete_confirm_msg: 'هل أنت متأكد من حذف هذا السجل نهائياً من قاعدة البيانات؟ لا يمكن التراجع عن هذا الإجراء.',
+    delete_within_24h_only: 'الحذف متاح فقط خلال أول 24 ساعة من التسجيل.',
+    delete_time_expired: 'انتهت مهلة الحذف (الحذف متاح خلال أول 24 ساعة فقط من التسجيل).',
+    deleted_successfully: 'تم الحذف بنجاح',
+    updated_successfully: 'تم التحديث بنجاح',
+    time_left_to_delete: 'الوقت المتبقي للحذف',
+    hours_left: 'ساعة متبقية',
+
     // Navigation & Tabs
     nav_dashboard: 'لوحة التحكم',
     nav_leads: 'الفرص المحتملة',
@@ -444,10 +476,15 @@ export const translations = {
     nav_profile: 'حسابي',
 
     // Auth & Account
+    auth_title: 'تسجيل الدخول إلى نظام CLC',
+    auth_subtitle: 'بوابة الإدارة والمتابعة الميدانية',
     auth_sign_in: 'تسجيل الدخول',
     auth_sign_out: 'تسجيل الخروج',
     auth_email: 'البريد الإلكتروني',
+    auth_placeholder_email: 'أدخل البريد الإلكتروني',
     auth_password: 'كلمة المرور',
+    auth_placeholder_password: 'أدخل كلمة المرور',
+    auth_remember_me: 'تذكرني',
     auth_signing_in: 'جاري تسجيل الدخول...',
     auth_signed_out_confirm: 'هل أنت متأكد من رغبتك في تسجيل الخروج؟',
     auth_access_restricted: 'الوصول مقيد',
@@ -567,7 +604,6 @@ export const translations = {
     quick_log_submit_button: 'تسجيل النشاط الميداني',
     quick_log_success: 'تم تسجيل النشاط الميداني بنجاح!',
     quick_log_offline_saved: 'تم الحفظ بدون اتصال. ستتم المزامنة تلقائياً عند توفر الإنترنت.',
-    offline_saved: 'تم الحفظ بدون اتصال',
 
     // Daily Report Screen
     report_title: 'التقرير الميداني اليومي',

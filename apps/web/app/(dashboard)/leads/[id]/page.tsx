@@ -15,10 +15,14 @@ import {
   Tag,
   CheckCircle,
   FileCheck,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useLanguage } from '@/lib/language-context';
 import { ActivityTimeline } from '@/components/ActivityTimeline';
+import { EditLeadModal } from '@/components/EditLeadModal';
+import { DeleteConfirmModal } from '@/components/DeleteConfirmModal';
 import type { Lead, LeadStatus, District, Profile, Activity } from '@clc/shared';
 
 const STAGES: LeadStatus[] = [
@@ -44,6 +48,8 @@ function LeadDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isConverting, setIsConverting] = useState(false);
   const [convertSuccess, setConvertSuccess] = useState<string | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const loadLeadData = async () => {
     try {
@@ -215,29 +221,66 @@ function LeadDetailPage() {
             </div>
           </div>
 
-          {/* Action: Convert to Customer if won */}
-          {lead.status === 'won' && (
-            <div>
-              {convertSuccess ? (
-                <Link
-                  href={`/customers/${convertSuccess}`}
-                  className="flex items-center gap-2 px-4 py-2 bg-cream-100 border border-gray-200 text-ink-900 rounded-button text-xs font-semibold hover:bg-gray-100"
-                >
-                  <FileCheck className="h-4 w-4" />
-                  <span>{t('view_all_accounts')}</span>
-                </Link>
-              ) : (
+          {/* Header Action Buttons */}
+          <div className="flex items-center gap-2">
+            {/* Edit Lead Button (Always active) */}
+            <button
+              onClick={() => setIsEditModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-200 text-ink-900 rounded-button text-xs font-semibold hover:bg-gray-50 transition-colors"
+            >
+              <Pencil className="h-3.5 w-3.5 text-gray-500" />
+              <span>{t('edit_lead')}</span>
+            </button>
+
+            {/* Delete Lead Button (Active only within 24 hours of creation) */}
+            {(() => {
+              const isWithin24Hours =
+                Date.now() - new Date(lead.created_at).getTime() < 24 * 60 * 60 * 1000;
+
+              return isWithin24Hours ? (
                 <button
-                  onClick={handleConvertToCustomer}
-                  disabled={isConverting}
-                  className="flex items-center gap-2 px-4 py-2 bg-ink-900 text-white rounded-button text-xs font-semibold hover:bg-black transition-colors"
+                  onClick={() => setIsDeleteModalOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-white border border-red-200 text-red-600 rounded-button text-xs font-semibold hover:bg-red-50 transition-colors"
+                  title={t('delete_lead')}
                 >
-                  <CheckCircle className="h-4 w-4" />
-                  <span>{isConverting ? t('saving') : t('convert_to_customer')}</span>
+                  <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                  <span>{t('delete_lead')}</span>
                 </button>
-              )}
-            </div>
-          )}
+              ) : (
+                <div
+                  className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 border border-gray-200 text-gray-400 rounded-button text-xs font-medium cursor-not-allowed opacity-60"
+                  title={t('delete_time_expired')}
+                >
+                  <Trash2 className="h-3.5 w-3.5 text-gray-300" />
+                  <span className="line-through">{t('delete_lead')}</span>
+                </div>
+              );
+            })()}
+
+            {/* Action: Convert to Customer if won */}
+            {lead.status === 'won' && (
+              <div>
+                {convertSuccess ? (
+                  <Link
+                    href={`/customers/${convertSuccess}`}
+                    className="flex items-center gap-2 px-4 py-2 bg-cream-100 border border-gray-200 text-ink-900 rounded-button text-xs font-semibold hover:bg-gray-100"
+                  >
+                    <FileCheck className="h-4 w-4" />
+                    <span>{t('view_all_accounts')}</span>
+                  </Link>
+                ) : (
+                  <button
+                    onClick={handleConvertToCustomer}
+                    disabled={isConverting}
+                    className="flex items-center gap-2 px-4 py-2 bg-ink-900 text-white rounded-button text-xs font-semibold hover:bg-black transition-colors"
+                  >
+                    <CheckCircle className="h-4 w-4" />
+                    <span>{isConverting ? t('saving') : t('convert_to_customer')}</span>
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Stage Progression Bar */}
@@ -369,6 +412,25 @@ function LeadDetailPage() {
           />
         </div>
       </main>
+
+      {/* Edit Lead Modal */}
+      <EditLeadModal
+        isOpen={isEditModalOpen}
+        lead={lead}
+        onClose={() => setIsEditModalOpen(false)}
+        onUpdated={loadLeadData}
+      />
+
+      {/* Delete Lead Modal (24h restricted) */}
+      <DeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        title={lead.company_name}
+        createdAt={lead.created_at}
+        entityType="lead"
+        entityId={lead.id}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onDeleted={() => router.push('/leads')}
+      />
     </div>
   );
 }

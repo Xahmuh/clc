@@ -13,6 +13,9 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'CLC CRM — Contracting & Field Activity Tracking',
   description: 'CRM system for CLC Contracting Company, Riyadh, Saudi Arabia',
+  other: {
+    google: 'notranslate',
+  },
 };
 
 export default function RootLayout({
@@ -21,8 +24,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={inter.variable}>
-      <body className="font-sans antialiased bg-white text-ink-900 selection:bg-ink-900 selection:text-white">
+    <html lang="ar" dir="rtl" className={`${inter.variable} notranslate`} translate="no">
+      <head>
+        <meta name="google" content="notranslate" />
+      </head>
+      <body className="font-sans antialiased bg-white text-ink-900 selection:bg-ink-900 selection:text-white notranslate">
         <LanguageProvider>
           <AuthProvider>{children}</AuthProvider>
         </LanguageProvider>
