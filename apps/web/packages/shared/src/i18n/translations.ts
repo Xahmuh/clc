@@ -355,7 +355,7 @@ export const translations = {
     profile_language_card_title: 'App Language',
     profile_language_card_desc: 'Switch between English and Arabic interface instantly',
     login_title: 'Welcome to CLC CRM',
-    login_email_label: 'Email Address',
+    login_email_label: 'Email address',
     login_password_label: 'Password',
     login_password_placeholder: 'Enter your password',
     login_submit_button: 'Sign In',
@@ -708,7 +708,7 @@ export const translations = {
 
     // Mobile specific keys
     login_subtitle: 'تسجيل الدخول ببيانات اعتماد الشركة',
-    login_email_placeholder: 'أدخل البريد الإلكتروني',
+    login_email_placeholder: 'Type your Email address',
     login_error_missing: 'يرجى إدخال البريد الإلكتروني وكلمة المرور.',
     home_field_dispatch: 'الميدان',
     home_quick_log_banner_title: 'تسجيل سريع للنشاط',
@@ -740,8 +740,8 @@ export const translations = {
     profile_language_card_title: 'لغة التطبيق',
     profile_language_card_desc: 'التبديل الفوري بين الواجهة العربية والإنجليزية',
     login_title: 'مرحباً بك في نظام سي إل سي',
-    login_email_label: 'البريد الإلكتروني',
-    login_password_label: 'كلمة المرور',
+    login_email_label: 'Email address',
+    login_password_label: 'Password',
     login_password_placeholder: 'أدخل كلمة المرور',
     login_submit_button: 'تسجيل الدخول',
     login_signing_in: 'جاري تسجيل الدخول...',

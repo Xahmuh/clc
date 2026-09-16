@@ -93,10 +93,10 @@ export function LoginScreen() {
 
               <View style={styles.form}>
                 <View style={styles.field}>
-                  <Text style={styles.label}>{t('login_email_label')}</Text>
+                  <Text style={styles.label}>Email address</Text>
                   <TextInput
                     style={styles.input}
-                    placeholder={t('login_email_placeholder')}
+                    placeholder="Type your Email address"
                     placeholderTextColor={colors.textMuted}
                     keyboardType="email-address"
                     autoCapitalize="none"
@@ -107,7 +107,7 @@ export function LoginScreen() {
                 </View>
 
                 <View style={styles.field}>
-                  <Text style={styles.label}>{t('login_password_label')}</Text>
+                  <Text style={styles.label}>Password</Text>
                   <View style={styles.passwordContainer}>
                     <TextInput
                       style={styles.passwordInput}
@@ -250,12 +250,16 @@ const styles = StyleSheet.create({
   },
   field: {
     marginBottom: 16,
+    width: '100%',
   },
   label: {
     ...type.caption,
     fontWeight: '600',
     color: colors.ink,
     marginBottom: 6,
+    textAlign: 'left',
+    writingDirection: 'ltr',
+    alignSelf: 'flex-start',
   },
   input: {
     borderWidth: 1,
@@ -266,6 +270,8 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.ink,
     backgroundColor: colors.white,
+    textAlign: 'left',
+    writingDirection: 'ltr',
   },
   passwordContainer: {
     flexDirection: 'row',
@@ -281,6 +287,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 15,
     color: colors.ink,
+    textAlign: 'left',
+    writingDirection: 'ltr',
   },
   eyeButton: {
     paddingHorizontal: 14,

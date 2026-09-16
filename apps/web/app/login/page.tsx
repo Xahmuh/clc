@@ -44,8 +44,8 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-4 bg-gray-50/50">
-      <div className="w-full max-w-md">
+    <main className="min-h-screen flex items-center justify-center p-4 bg-gray-50/50" dir="ltr">
+      <div className="w-full max-w-md" dir="ltr">
         {/* Brand Header */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-3">
@@ -63,18 +63,18 @@ export default function LoginPage() {
         </div>
 
         {/* Login Card */}
-        <div className="bg-white rounded-panel border border-gray-200 p-8">
+        <div className="bg-white rounded-panel border border-gray-200 p-8" dir="ltr">
           {error && (
-            <div className="mb-5 p-3 rounded-card bg-red-50 border border-red-200 text-xs text-red-600">
+            <div className="mb-5 p-3 rounded-card bg-red-50 border border-red-200 text-xs text-red-600 text-left">
               {error}
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-4 text-left" dir="ltr">
             <div>
               <label
                 htmlFor="email"
-                className="block text-xs font-medium text-gray-500 mb-1.5"
+                className="block text-xs font-medium text-gray-500 mb-1.5 text-left"
               >
                 Email address
               </label>
@@ -86,7 +86,8 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Type your Email address"
-                className="w-full px-3.5 py-2.5 text-sm bg-white border border-gray-200 rounded-button text-ink-900 placeholder:text-gray-400 focus:outline-none focus:border-ink-900 transition-colors"
+                dir="ltr"
+                className="w-full px-3.5 py-2.5 text-sm bg-white border border-gray-200 rounded-button text-ink-900 placeholder:text-gray-400 focus:outline-none focus:border-ink-900 transition-colors text-left"
               />
             </div>
 
@@ -94,12 +95,12 @@ export default function LoginPage() {
               <div className="flex items-center justify-between mb-1.5">
                 <label
                   htmlFor="password"
-                  className="block text-xs font-medium text-gray-500"
+                  className="block text-xs font-medium text-gray-500 text-left"
                 >
                   Password
                 </label>
               </div>
-              <div className="relative">
+              <div className="relative" dir="ltr">
                 <input
                   id="password"
                   type={showPassword ? "text" : "password"}
@@ -108,7 +109,8 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-3.5 pr-10 py-2.5 text-sm bg-white border border-gray-200 rounded-button text-ink-900 placeholder:text-gray-400 focus:outline-none focus:border-ink-900 transition-colors"
+                  dir="ltr"
+                  className="w-full pl-3.5 pr-10 py-2.5 text-sm bg-white border border-gray-200 rounded-button text-ink-900 placeholder:text-gray-400 focus:outline-none focus:border-ink-900 transition-colors text-left"
                 />
                 <button
                   type="button"
