@@ -196,7 +196,7 @@ function LeadDetailPage() {
   return (
     <div className="flex-1 flex flex-col min-w-0 bg-white">
       {/* Detail Header */}
-      <header className="px-8 py-5 border-b border-gray-200">
+      <header className="px-4 sm:px-8 py-4 sm:py-5 border-b border-gray-200">
         <Link
           href="/leads"
           className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-ink-900 mb-3 transition-colors"
@@ -207,14 +207,14 @@ function LeadDetailPage() {
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-card bg-gray-50 border border-gray-200 flex items-center justify-center text-ink-900">
+            <div className="h-10 w-10 rounded-card bg-gray-50 border border-gray-200 flex items-center justify-center text-ink-900 shrink-0">
               <Building2 className="h-5 w-5" />
             </div>
-            <div>
-              <h1 className="text-xl font-semibold text-ink-900">
+            <div className="min-w-0">
+              <h1 className="text-xl font-semibold text-ink-900 truncate">
                 {lead.company_name}
               </h1>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="text-xs text-gray-500 mt-0.5 truncate">
                 {t('field_date')}: {new Date(lead.created_at).toLocaleDateString()} · {t('field_assigned_to')}:{' '}
                 {assignedEmployee ? assignedEmployee.full_name : t('unassigned')}
               </p>
@@ -222,7 +222,7 @@ function LeadDetailPage() {
           </div>
 
           {/* Header Action Buttons */}
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {/* Edit Lead Button (Always active) */}
             <button
               onClick={() => setIsEditModalOpen(true)}
@@ -311,7 +311,7 @@ function LeadDetailPage() {
       </header>
 
       {/* Main Content Grid: Info Card + Activity Timeline */}
-      <main className="flex-1 p-8 grid grid-cols-1 lg:grid-cols-3 gap-8 overflow-y-auto">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 overflow-y-auto">
         {/* Left Column: Lead Info Summary */}
         <div className="space-y-6">
           <div className="bg-white rounded-panel border border-gray-200 p-6 space-y-4">

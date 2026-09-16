@@ -20,7 +20,7 @@ import { colors, radius, type } from '../theme';
 
 export function LoginScreen() {
   const { signIn } = useAuth();
-  const { t, language, toggleLanguage } = useLanguage();
+  const { t, language, toggleLanguage, isRTL } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -93,10 +93,12 @@ export function LoginScreen() {
 
               <View style={styles.form}>
                 <View style={styles.field}>
-                  <Text style={styles.label}>Email address</Text>
+                  <Text style={[styles.label, { alignSelf: isRTL ? 'flex-end' : 'flex-start', textAlign: isRTL ? 'right' : 'left' }]}>
+                    {t('auth_email')}
+                  </Text>
                   <TextInput
                     style={styles.input}
-                    placeholder="Type your Email address"
+                    placeholder={t('auth_placeholder_email')}
                     placeholderTextColor={colors.textMuted}
                     keyboardType="email-address"
                     autoCapitalize="none"
@@ -107,11 +109,13 @@ export function LoginScreen() {
                 </View>
 
                 <View style={styles.field}>
-                  <Text style={styles.label}>Password</Text>
+                  <Text style={[styles.label, { alignSelf: isRTL ? 'flex-end' : 'flex-start', textAlign: isRTL ? 'right' : 'left' }]}>
+                    {t('auth_password')}
+                  </Text>
                   <View style={styles.passwordContainer}>
                     <TextInput
                       style={styles.passwordInput}
-                      placeholder={t('login_password_placeholder')}
+                      placeholder={t('auth_placeholder_password')}
                       placeholderTextColor={colors.textMuted}
                       secureTextEntry={!showPassword}
                       autoCapitalize="none"
@@ -209,6 +213,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 20,
     elevation: 10,
+    width: '100%',
+    maxWidth: 440,
+    alignSelf: 'center',
   },
   header: {
     marginBottom: 24,

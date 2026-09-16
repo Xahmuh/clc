@@ -80,7 +80,7 @@ export default function CustomersPage() {
   return (
     <div className="flex-1 flex flex-col min-w-0 bg-white">
       {/* Top Header */}
-      <header className="px-8 py-6 border-b border-gray-200">
+      <header className="px-4 sm:px-8 py-4 sm:py-6 border-b border-gray-200">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-xl font-semibold text-ink-900 tracking-tight">
@@ -93,7 +93,7 @@ export default function CustomersPage() {
 
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-ink-900 text-white rounded-button text-xs font-semibold hover:bg-black transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-ink-900 text-white rounded-button text-xs font-semibold hover:bg-black transition-colors self-start sm:self-auto"
           >
             <Plus className="h-4 w-4" />
             <span>{t('dir_add_customer')}</span>
@@ -101,7 +101,7 @@ export default function CustomersPage() {
         </div>
 
         {/* Search Input & Executive Filter */}
-        <div className="mt-5 flex flex-col sm:flex-row items-center gap-3">
+        <div className="mt-5 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <div className="relative flex-1 w-full sm:max-w-md">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
             <input
@@ -134,25 +134,26 @@ export default function CustomersPage() {
       </header>
 
       {/* Main Customers Table */}
-      <main className="flex-1 p-8 overflow-y-auto">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
         {isLoading ? (
           <div className="h-64 flex items-center justify-center text-xs text-gray-400">
             {t('loading_customers')}
           </div>
         ) : (
           <div className="bg-white rounded-panel border border-gray-200 overflow-hidden">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="border-b border-gray-200 bg-gray-50/50 text-gray-500 font-semibold uppercase tracking-wider">
-                  <th className="py-3 px-4">{t('th_company')}</th>
-                  <th className="py-3 px-4">{t('th_contact')}</th>
-                  <th className="py-3 px-4">{t('th_contact_info')}</th>
-                  <th className="py-3 px-4">{t('th_district')}</th>
-                  <th className="py-3 px-4">{t('th_account_manager')}</th>
-                  <th className="py-3 px-4">{t('th_customer_since')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
+            <div className="overflow-x-auto">
+              <table className="w-full text-start text-xs border-collapse min-w-[650px]">
+                <thead>
+                  <tr className="border-b border-gray-200 bg-gray-50/50 text-gray-500 font-semibold uppercase tracking-wider text-start">
+                    <th className="py-3 px-4">{t('th_company')}</th>
+                    <th className="py-3 px-4">{t('th_contact')}</th>
+                    <th className="py-3 px-4">{t('th_contact_info')}</th>
+                    <th className="py-3 px-4">{t('th_district')}</th>
+                    <th className="py-3 px-4">{t('th_account_manager')}</th>
+                    <th className="py-3 px-4">{t('th_customer_since')}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
                 {filteredCustomers.map((cust) => {
                   const district = cust.district_id ? districts[cust.district_id] : null;
                   const employee = cust.assigned_to ? employees[cust.assigned_to] : null;
@@ -207,6 +208,7 @@ export default function CustomersPage() {
               </tbody>
             </table>
           </div>
+        </div>
         )}
       </main>
 

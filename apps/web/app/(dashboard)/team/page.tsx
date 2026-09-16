@@ -196,7 +196,7 @@ export default function TeamPage() {
   return (
     <div className="flex-1 flex flex-col min-w-0 bg-white">
       {/* Header */}
-      <header className="px-8 py-6 border-b border-gray-200">
+      <header className="px-4 sm:px-8 py-4 sm:py-6 border-b border-gray-200">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
@@ -210,10 +210,10 @@ export default function TeamPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <button
               onClick={() => setIsReassignOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-ink-900 rounded-button text-xs font-semibold hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-white border border-gray-200 text-ink-900 rounded-button text-xs font-semibold hover:bg-gray-50 transition-colors"
             >
               <UserCheck className="h-4 w-4" />
               <span>{t('team_reassign_leads')}</span>
@@ -221,7 +221,7 @@ export default function TeamPage() {
 
             <button
               onClick={() => setIsAddModalOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-ink-900 text-white rounded-button text-xs font-semibold hover:bg-black transition-colors"
+              className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-ink-900 text-white rounded-button text-xs font-semibold hover:bg-black transition-colors"
             >
               <UserPlus className="h-4 w-4" />
               <span>{t('team_add_employee')}</span>
@@ -231,22 +231,23 @@ export default function TeamPage() {
       </header>
 
       {/* Main Team Table */}
-      <main className="flex-1 p-8 overflow-y-auto">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
         <div className="bg-white rounded-panel border border-gray-200 overflow-hidden">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className="border-b border-gray-200 bg-gray-50/50 text-gray-500 font-semibold uppercase tracking-wider">
-                <th className="py-3 px-4">{t('team_member')}</th>
-                <th className="py-3 px-4">{t('field_role')}</th>
-                <th className="py-3 px-4">{t('team_contact')}</th>
-                <th className="py-3 px-4">{t('team_status')}</th>
-                <th className="py-3 px-4">{t('team_joined_date')}</th>
-                <th className="py-3 px-4 text-right">{t('field_actions')}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {team.map((member) => {
-                const isSelf = member.id === profile?.id;
+          <div className="overflow-x-auto">
+            <table className="w-full text-start text-xs border-collapse min-w-[650px]">
+              <thead>
+                <tr className="border-b border-gray-200 bg-gray-50/50 text-gray-500 font-semibold uppercase tracking-wider">
+                  <th className="py-3 px-4 text-start">{t('team_member')}</th>
+                  <th className="py-3 px-4 text-start">{t('field_role')}</th>
+                  <th className="py-3 px-4 text-start">{t('team_contact')}</th>
+                  <th className="py-3 px-4 text-start">{t('team_status')}</th>
+                  <th className="py-3 px-4 text-start">{t('team_joined_date')}</th>
+                  <th className="py-3 px-4 text-end">{t('field_actions')}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {team.map((member) => {
+                  const isSelf = member.id === profile?.id;
 
                 return (
                   <tr
@@ -350,13 +351,14 @@ export default function TeamPage() {
               )}
             </tbody>
           </table>
+          </div>
         </div>
       </main>
 
       {/* Add Employee Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-900/40 backdrop-blur-sm">
-          <div className="bg-white rounded-panel border border-gray-200 w-full max-w-md p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-900/40 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-white rounded-panel border border-gray-200 w-full max-w-md p-6 max-h-[90vh] overflow-y-auto my-auto">
             <div className="flex items-center justify-between pb-4 border-b border-gray-200">
               <h2 className="text-lg font-semibold text-ink-900">{t('team_add_employee')}</h2>
               <button

@@ -127,7 +127,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="w-full max-w-5xl mx-auto p-8 space-y-8">
+    <div className="w-full max-w-5xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
       {/* Page Header */}
       <div>
         <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
@@ -140,9 +140,9 @@ export default function SettingsPage() {
       </div>
 
       {/* LANGUAGE SELECTION SETTINGS */}
-      <div className="bg-white rounded-card border border-gray-200 p-6 space-y-4">
+      <div className="bg-white rounded-card border border-gray-200 p-4 sm:p-6 space-y-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-button bg-surfaceSubtle border border-gray-200 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-button bg-surfaceSubtle border border-gray-200 flex items-center justify-center shrink-0">
             <Globe className="h-5 w-5 text-ink-900" />
           </div>
           <div>
@@ -153,7 +153,7 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-4 pt-2">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4 pt-2">
           <button
             onClick={() => setLanguage('en')}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-button text-xs font-semibold border transition-all ${

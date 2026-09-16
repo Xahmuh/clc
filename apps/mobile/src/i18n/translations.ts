@@ -405,6 +405,7 @@ export const translations = {
     quick_log_err_auth: 'You must be signed in to log an activity.',
     quick_log_err_select: 'Please select an account to log against.',
     quick_log_err_notes: 'Please enter a brief note or visit summary.',
+    offline_saved: 'Saved Offline',
   },
 
   ar: {
@@ -809,6 +810,7 @@ export const translations = {
     quick_log_err_auth: 'يجب تسجيل الدخول لتسجيل نشاط.',
     quick_log_err_select: 'يرجى اختيار حساب لتسجيل النشاط عليه.',
     quick_log_err_notes: 'يرجى إدخال ملخص للملاحظات أو الزيارة.',
+    offline_saved: 'تم الحفظ بدون اتصال',
   },
 } as const;
 

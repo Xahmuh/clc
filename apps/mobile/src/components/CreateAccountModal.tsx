@@ -759,6 +759,9 @@ const styles = StyleSheet.create({
     maxHeight: '90%',
     padding: 20,
     paddingBottom: Platform.OS === 'ios' ? 36 : 24,
+    width: '100%',
+    maxWidth: 600,
+    alignSelf: 'center',
   },
   modalHeader: {
     flexDirection: 'row',

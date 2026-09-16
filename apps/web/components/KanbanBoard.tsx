@@ -23,6 +23,7 @@ const COLUMNS: { status: LeadStatus }[] = [
 export function KanbanBoard({ leads, onStatusChange }: KanbanBoardProps) {
   const { t, formatStatus } = useLanguage();
   const [draggedLeadId, setDraggedLeadId] = useState<string | null>(null);
+  const [selectedMobileStage, setSelectedMobileStage] = useState<string>('all');
 
   const handleDragStart = (e: React.DragEvent, id: string) => {
     e.dataTransfer.setData('text/plain', id);
@@ -42,19 +43,71 @@ export function KanbanBoard({ leads, onStatusChange }: KanbanBoardProps) {
     setDraggedLeadId(null);
   };
 
-  return (
-    <div className="flex gap-4 overflow-x-auto pb-6 pt-1 select-none min-h-[calc(100vh-220px)]">
-      {COLUMNS.map((col, colIndex) => {
-        const columnLeads = leads.filter((l) => l.status === col.status);
-        const count = columnLeads.length;
+  const activeColumns = COLUMNS.filter((col) => {
+    if (selectedMobileStage === 'all') return true;
+    return col.status === selectedMobileStage;
+  });
 
-        return (
-          <div
-            key={col.status}
-            onDragOver={handleDragOver}
-            onDrop={(e) => handleDrop(e, col.status)}
-            className="w-80 shrink-0 flex flex-col bg-gray-50/50 rounded-panel p-3 border border-gray-200"
-          >
+  return (
+    <div className="flex flex-col flex-1 min-w-0">
+      {/* Mobile Stage Selector Tabs (visible on < md) */}
+      <div className="md:hidden flex items-center gap-1.5 overflow-x-auto pb-3 mb-2 px-1 scrollbar-none">
+        <button
+          onClick={() => setSelectedMobileStage('all')}
+          className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+            selectedMobileStage === 'all'
+              ? 'bg-ink-900 text-white border-ink-900'
+              : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
+          }`}
+        >
+          <span>{t('all')}</span>
+          <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+            selectedMobileStage === 'all' ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-700'
+          }`}>
+            {leads.length}
+          </span>
+        </button>
+
+        {COLUMNS.map((col) => {
+          const count = leads.filter((l) => l.status === col.status).length;
+          const isSelected = selectedMobileStage === col.status;
+          return (
+            <button
+              key={col.status}
+              onClick={() => setSelectedMobileStage(col.status)}
+              className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                isSelected
+                  ? 'bg-ink-900 text-white border-ink-900'
+                  : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
+              }`}
+            >
+              <span>{formatStatus(col.status)}</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                isSelected ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-700'
+              }`}>
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Kanban Columns */}
+      <div className="flex gap-4 overflow-x-auto pb-6 pt-1 select-none min-h-[calc(100vh-250px)]">
+        {activeColumns.map((col) => {
+          const colIndex = COLUMNS.findIndex((c) => c.status === col.status);
+          const columnLeads = leads.filter((l) => l.status === col.status);
+          const count = columnLeads.length;
+
+          return (
+            <div
+              key={col.status}
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleDrop(e, col.status)}
+              className={`${
+                selectedMobileStage !== 'all' ? 'w-full md:w-80' : 'w-72 sm:w-80'
+              } shrink-0 flex flex-col bg-gray-50/50 rounded-panel p-3 border border-gray-200`}
+            >
             {/* Column Header with Pill Count Badge */}
             <div className="flex items-center justify-between px-2 py-2 mb-2">
               <h2 className="text-[15px] font-semibold text-ink-900">
@@ -119,6 +172,7 @@ export function KanbanBoard({ leads, onStatusChange }: KanbanBoardProps) {
           </div>
         );
       })}
+      </div>
     </div>
   );
 }

@@ -415,7 +415,7 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-8 space-y-8">
+    <div className="w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
       {/* Top Header & Export Toolbar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -428,7 +428,7 @@ export default function ReportsPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <button
             onClick={handlePrintPdf}
             className="inline-flex items-center gap-2 bg-white border border-gray-200 text-ink-900 px-3.5 py-2 rounded-button text-sm font-semibold hover:bg-gray-50 transition-colors"

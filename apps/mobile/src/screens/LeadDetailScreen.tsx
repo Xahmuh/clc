@@ -476,6 +476,9 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 16,
     paddingBottom: 40,
+    width: '100%',
+    maxWidth: 720,
+    alignSelf: 'center',
   },
   headerCard: {
     borderWidth: 1,

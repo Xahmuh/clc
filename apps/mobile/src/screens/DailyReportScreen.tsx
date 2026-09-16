@@ -549,6 +549,9 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 16,
     paddingBottom: 48,
+    width: '100%',
+    maxWidth: 720,
+    alignSelf: 'center',
   },
   summaryPanel: {
     backgroundColor: colors.cream,

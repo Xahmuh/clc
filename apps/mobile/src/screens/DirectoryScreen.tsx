@@ -172,9 +172,10 @@ export function DirectoryScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Segmented Tab Switch */}
-      <View style={styles.tabBar}>
-        <TouchableOpacity
+      <View style={styles.contentWrapper}>
+        {/* Segmented Tab Switch */}
+        <View style={styles.tabBar}>
+          <TouchableOpacity
           style={[styles.tabButton, activeTab === 'leads' && styles.tabButtonActive]}
           onPress={() => {
             setActiveTab('leads');
@@ -501,6 +502,7 @@ export function DirectoryScreen() {
           {activeTab === 'leads' ? t('dir_add_lead') : t('dir_add_customer')}
         </Text>
       </TouchableOpacity>
+      </View>
 
       {/* Create Lead / Customer Modal */}
       <CreateAccountModal
@@ -517,6 +519,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.white,
+  },
+  contentWrapper: {
+    flex: 1,
+    width: '100%',
+    maxWidth: 720,
+    alignSelf: 'center',
   },
   tabBar: {
     flexDirection: 'row',

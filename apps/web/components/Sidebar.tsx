@@ -9,10 +9,16 @@ import { LayoutGrid, Users, ShieldCheck, LogOut, Building, LayoutDashboard, File
 import { useAuth } from '@/lib/auth-context';
 import { useLanguage } from '@/lib/language-context';
 
-export function Sidebar() {
+interface SidebarProps {
+  onNavigate?: () => void;
+  onClose?: () => void;
+  className?: string;
+}
+
+export function Sidebar({ onNavigate, onClose, className = '' }: SidebarProps) {
   const pathname = usePathname();
   const { user, profile, isAdmin, signOut } = useAuth();
-  const { language, toggleLanguage, t, formatRole } = useLanguage();
+  const { language, toggleLanguage, t, formatRole, isRTL } = useLanguage();
 
   const navItems = [
     {
@@ -54,21 +60,34 @@ export function Sidebar() {
   ];
 
   return (
-    <aside className="w-64 h-screen bg-white border-r border-gray-200 flex flex-col shrink-0 select-none">
+    <aside className={`w-64 h-full bg-white border-r rtl:border-r-0 rtl:border-l border-gray-200 flex flex-col shrink-0 select-none ${className}`}>
       {/* Brand Header */}
-      <div className="h-[84px] px-4 flex items-center justify-center border-b border-gray-200">
-        <Link href="/dashboard" className="flex items-center justify-center w-full">
+      <div className="h-[84px] px-4 flex items-center justify-between border-b border-gray-200">
+        <Link
+          href="/dashboard"
+          onClick={onNavigate}
+          className="flex items-center justify-center flex-1"
+        >
           <Image
             src={logoImg}
             alt="Construction Land For Contracting Co. (CLC)"
             priority
-            className="h-[56px] w-auto max-w-[224px] object-contain"
+            className="h-[52px] w-auto max-w-[200px] object-contain"
           />
         </Link>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="p-2 text-gray-400 hover:text-ink-900 rounded-button transition-colors md:hidden"
+            aria-label="Close menu"
+          >
+            ✕
+          </button>
+        )}
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1">
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {navItems
           .filter((item) => item.show)
           .map((item) => {
@@ -79,6 +98,7 @@ export function Sidebar() {
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={onNavigate}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-button text-sm font-medium transition-colors ${
                   isActive
                     ? 'bg-ink-900 text-white'
@@ -93,7 +113,7 @@ export function Sidebar() {
       </nav>
 
       {/* User & Sign Out Footer */}
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4 border-t border-gray-200 bg-white">
         {/* Language Switcher Button */}
         <button
           onClick={toggleLanguage}
@@ -115,7 +135,7 @@ export function Sidebar() {
                 {profile?.full_name?.substring(0, 2).toUpperCase() || 'U'}
               </div>
               {/* Online status green dot */}
-              <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-online ring-2 ring-white" />
+              <span className={`absolute bottom-0 ${isRTL ? 'left-0' : 'right-0'} h-2.5 w-2.5 rounded-full bg-online ring-2 ring-white`} />
             </div>
 
             <div className="min-w-0 flex-1">

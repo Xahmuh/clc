@@ -118,7 +118,7 @@ export default function LeadsPage() {
   return (
     <div className="flex-1 flex flex-col min-w-0 bg-white">
       {/* Top Header & Actions Bar */}
-      <header className="px-8 py-6 border-b border-gray-200">
+      <header className="px-4 sm:px-8 py-4 sm:py-6 border-b border-gray-200">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-xl font-semibold text-ink-900 tracking-tight">
@@ -168,7 +168,7 @@ export default function LeadsPage() {
         </div>
 
         {/* Filter / Search Row */}
-        <div className="mt-5 flex flex-col sm:flex-row items-center gap-3">
+        <div className="mt-5 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <div className="relative flex-1 w-full">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
             <input
@@ -180,14 +180,14 @@ export default function LeadsPage() {
             />
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
             {isManager && (
               <CustomSelect
                 value={executiveFilter}
                 onChange={(val) => setExecutiveFilter(val)}
                 size="sm"
                 fullWidth={false}
-                className="min-w-[170px]"
+                className="w-full sm:w-auto sm:min-w-[170px]"
                 options={[
                   { value: 'all', label: t('filter_all_executives') },
                   ...Object.values(employees).map((emp) => ({
@@ -204,7 +204,7 @@ export default function LeadsPage() {
               onChange={(val) => setStatusFilter(val)}
               size="sm"
               fullWidth={false}
-              className="min-w-[140px]"
+              className="w-full sm:w-auto sm:min-w-[140px]"
               options={[
                 { value: 'all', label: t('all_statuses') },
                 { value: 'new', label: t('status_new') },
@@ -220,7 +220,7 @@ export default function LeadsPage() {
       </header>
 
       {/* Main View Area */}
-      <main className="flex-1 p-8 overflow-y-auto">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
         {isLoading ? (
           <div className="h-64 flex items-center justify-center text-xs text-gray-400">
             Loading leads...
@@ -233,9 +233,10 @@ export default function LeadsPage() {
         ) : (
           /* Table List View */
           <div className="bg-white rounded-panel border border-gray-200 overflow-hidden">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="border-b border-gray-200 bg-gray-50/50 text-gray-500 font-semibold uppercase tracking-wider">
+            <div className="overflow-x-auto">
+              <table className="w-full text-start text-xs border-collapse min-w-[700px]">
+                <thead>
+                  <tr className="border-b border-gray-200 bg-gray-50/50 text-gray-500 font-semibold uppercase tracking-wider text-start">
                   <th className="py-3 px-4">{t('field_company_name')}</th>
                   <th className="py-3 px-4">{t('field_contact_person')}</th>
                   <th className="py-3 px-4">{t('field_status')}</th>
@@ -308,6 +309,7 @@ export default function LeadsPage() {
               </tbody>
             </table>
           </div>
+        </div>
         )}
       </main>
 
