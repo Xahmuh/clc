@@ -3,6 +3,8 @@
 **Client:** CLC (Contracting Company — Saudi Arabia)
 **Purpose:** Track leads and customers, log daily field activities (visits, emails, calls), and generate daily/periodic reports for management.
 
+**Companion files:** `riyadh_districts_seed.sql` (district reference data) · `CLC-CRM-Design-System.md` (colors, typography, component patterns for both web and mobile)
+
 ---
 
 ## 1. Scope Decisions & Assumptions

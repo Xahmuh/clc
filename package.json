@@ -1,0 +1,12 @@
+{
+  "name": "clc-crm",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "test": "node tests/run-phase1-tests.mjs"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.2.17",
+    "pg": "^8.23.0"
+  }
+}
