@@ -1,0 +1,7 @@
+{
+  "name": "@clc/shared",
+  "version": "0.1.0",
+  "description": "Shared types, Supabase client, and constants for CLC CRM",
+  "main": "src/index.ts",
+  "types": "src/index.ts"
+}
