@@ -116,9 +116,9 @@ export default function DashboardPage() {
     (a) => a.follow_up_date && a.follow_up_date <= todayStr
   );
 
-  // Top Performers calculation (for Admin)
+  // Top Performers calculation (Strictly applies to Executive / Employee role only)
   const performers: TopPerformer[] = Object.values(profiles)
-    .filter((p) => p.is_active)
+    .filter((p) => p.is_active && p.role === 'employee')
     .map((emp) => {
       const empWon = wonLeads.filter((l) => l.assigned_to === emp.id);
       const empActs = activities.filter((a) => a.employee_id === emp.id);
@@ -449,7 +449,7 @@ export default function DashboardPage() {
             <div className="space-y-3">
               {isLoading ? (
                 <div className="space-y-4 animate-pulse py-2">
-                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                  {[1, 2, 3, 4, 5].map((i) => (
                     <div key={i} className="space-y-1.5">
                       <div className="flex justify-between">
                         <div className="h-3 w-20 bg-gray-100 rounded" />
@@ -467,11 +467,15 @@ export default function DashboardPage() {
                     { key: 'qualified', label: formatStatus('qualified'), count: stageCounts.qualified },
                     { key: 'negotiation', label: formatStatus('negotiation'), count: stageCounts.negotiation },
                     { key: 'won', label: formatStatus('won'), count: stageCounts.won },
-                    { key: 'lost', label: formatStatus('lost'), count: stageCounts.lost },
                   ] as const
                 ).map((stage) => {
-                  const total = leads.length || 1;
-                  const pct = Math.round((stage.count / total) * 100);
+                  const activePipelineTotal =
+                    stageCounts.new +
+                    stageCounts.contacted +
+                    stageCounts.qualified +
+                    stageCounts.negotiation +
+                    stageCounts.won || 1;
+                  const pct = Math.round((stage.count / activePipelineTotal) * 100);
 
                   return (
                     <div key={stage.key}>
