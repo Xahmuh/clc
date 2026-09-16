@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "build": "npm --prefix apps/web run build",
+    "start": "npm --prefix apps/web run start",
     "test": "node tests/run-phase1-tests.mjs"
   },
   "devDependencies": {
