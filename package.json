@@ -7,11 +7,9 @@
     "start": "npm --prefix apps/web run start",
     "test": "node tests/run-phase1-tests.mjs"
   },
-  "dependencies": {
-    "next": "14.2.15"
-  },
   "devDependencies": {
     "@electric-sql/pglite": "^0.2.17",
+    "@types/node": "^22.20.3",
     "pg": "^8.23.0"
   }
 }

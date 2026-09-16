@@ -14,7 +14,6 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
-    "types": [],
     "plugins": [
       {
         "name": "next"
@@ -23,7 +22,8 @@
     "paths": {
       "@/*": ["./*"],
       "@clc/shared": ["./packages/shared/src", "../../packages/shared/src"]
-    }
+    },
+    "typeRoots": ["./node_modules/@types", "../../node_modules/@types"]
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]
