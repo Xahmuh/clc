@@ -13,14 +13,29 @@ import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../lib/auth-context';
 import { useLanguage } from '../lib/language-context';
 import { getOfflineQueueCount, syncOfflineActivities } from '../lib/offline-queue';
+import { useUpdateManager, CURRENT_APP_VERSION } from '../lib/update-manager';
 import { colors, radius, type } from '../theme';
 
 export function ProfileScreen() {
   const navigation = useNavigation();
   const { profile, signOut, savePushToken } = useAuth();
   const { t, language, setLanguage, formatRole } = useLanguage();
+  const { checkForUpdates, isChecking, hasUpdate, latestVersion } = useUpdateManager();
   const [offlineCount, setOfflineCount] = useState(0);
   const [isSyncing, setIsSyncing] = useState(false);
+
+  const handleCheckUpdates = async () => {
+    const found = await checkForUpdates(true);
+    if (!found) {
+      Alert.alert(
+        language === 'ar' ? 'التطبيق محدث' : 'App is Up to Date',
+        language === 'ar'
+          ? `أنت تستخدم أحدث إصدار متاح من تطبيق CLC CRM (v${CURRENT_APP_VERSION}).`
+          : `You are using the latest version of CLC CRM (v${CURRENT_APP_VERSION}).`
+      );
+    }
+  };
+
 
   const checkQueue = async () => {
     const count = await getOfflineQueueCount();
@@ -217,6 +232,45 @@ export function ProfileScreen() {
                 ? (language === 'ar' ? 'تحديث تسجيل الإشعارات' : 'Refresh Push Registration')
                 : (language === 'ar' ? 'تفعيل الإشعارات الفورية' : 'Enable Push Notifications')}
             </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* App Version & Updates Card */}
+        <View style={styles.syncCard}>
+          <View style={styles.syncHeader}>
+            <Text style={styles.syncTitle}>
+              {language === 'ar' ? 'تحديثات التطبيق' : 'App Updates'}
+            </Text>
+            <View style={styles.pill}>
+              <Text style={styles.pillText}>v{CURRENT_APP_VERSION}</Text>
+            </View>
+          </View>
+          <Text style={styles.syncDesc}>
+            {hasUpdate
+              ? (language === 'ar'
+                  ? `يوجد إصدار جديد متاح (v${latestVersion}). اضغط بالأسفل للمعاينة والتحديث.`
+                  : `A new version (v${latestVersion}) is ready. Tap below to preview & update.`)
+              : (language === 'ar'
+                  ? 'يتلقى التطبيق التحديثات الهوائية والتحسينات تلقائياً عند صدور أي تعديل للنظام.'
+                  : 'The application receives automatic over-the-air updates and enhancements when releases are published.')}
+          </Text>
+
+          <TouchableOpacity
+            style={[styles.syncBtn, isChecking && styles.syncBtnDisabled]}
+            onPress={handleCheckUpdates}
+            disabled={isChecking}
+            activeOpacity={0.8}
+          >
+            {isChecking ? (
+              <ActivityIndicator color={colors.ink} size="small" />
+            ) : (
+              <>
+                <Ionicons name="cloud-download-outline" size={16} color={colors.ink} />
+                <Text style={styles.syncBtnText}>
+                  {language === 'ar' ? 'فحص التحديثات الآن' : 'Check for Updates Now'}
+                </Text>
+              </>
+            )}
           </TouchableOpacity>
         </View>
 
