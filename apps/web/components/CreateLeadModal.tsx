@@ -30,6 +30,7 @@ export function CreateLeadModal({ isOpen, onClose, onCreated }: CreateLeadModalP
   const [districtId, setDistrictId] = useState<number | ''>('');
   const [assignedTo, setAssignedTo] = useState<string>('');
   const [notes, setNotes] = useState('');
+  const [registrationDate, setRegistrationDate] = useState<string>(new Date().toISOString().split('T')[0]);
 
   const [districts, setDistricts] = useState<District[]>([]);
   const [employees, setEmployees] = useState<Profile[]>([]);
@@ -75,6 +76,9 @@ export function CreateLeadModal({ isOpen, onClose, onCreated }: CreateLeadModalP
 
     try {
       const targetAssignedTo = isManager ? assignedTo || user?.id : user?.id;
+      const customCreatedAt = registrationDate
+        ? new Date(registrationDate + 'T12:00:00Z').toISOString()
+        : new Date().toISOString();
 
       const { error: insertError } = await supabase.from('leads').insert({
         company_name: companyName.trim(),
@@ -88,6 +92,7 @@ export function CreateLeadModal({ isOpen, onClose, onCreated }: CreateLeadModalP
         district_id: districtId ? Number(districtId) : null,
         assigned_to: targetAssignedTo || null,
         notes: notes.trim() || null,
+        created_at: customCreatedAt,
       });
 
       if (insertError) {
@@ -102,6 +107,7 @@ export function CreateLeadModal({ isOpen, onClose, onCreated }: CreateLeadModalP
       setEstimatedValue('');
       setProjectType('');
       setNotes('');
+      setRegistrationDate(new Date().toISOString().split('T')[0]);
       onCreated();
       onClose();
     } catch (err: any) {
@@ -228,6 +234,21 @@ export function CreateLeadModal({ isOpen, onClose, onCreated }: CreateLeadModalP
                 ]}
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">
+              {t('field_registration_date')}
+            </label>
+            <input
+              type="date"
+              value={registrationDate}
+              onChange={(e) => setRegistrationDate(e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-button focus:outline-none focus:border-ink-900 bg-white"
+            />
+            <p className="text-[11px] text-gray-400 mt-1">
+              {t('backdated_date_hint')}
+            </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

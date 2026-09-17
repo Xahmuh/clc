@@ -208,14 +208,9 @@ export default function DashboardPage() {
       <div className="w-full bg-cream-100 rounded-panel p-6 sm:p-8 border border-gray-200">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-[17px] font-semibold text-ink-900">
+            <h2 className="text-[17px] font-semibold text-ink-900 uppercase tracking-wide">
               {isManager ? t('dash_kpi_title_manager') : t('dash_kpi_title_rep')}
             </h2>
-            <p className="text-xs text-gray-500 mt-0.5">
-              {isManager
-                ? t('dash_kpi_sub_manager')
-                : t('dash_kpi_sub_rep')}
-            </p>
           </div>
           <span className="text-xs font-medium px-2.5 py-1 bg-white border border-gray-200 rounded-full text-ink-900">
             {t('dash_live_feed')}

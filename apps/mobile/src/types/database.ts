@@ -39,6 +39,7 @@ export interface Lead {
   follow_up_date?: string | null;
   created_at: string;
   updated_at: string;
+  recorded_at?: string;
 }
 
 export interface Customer {
@@ -54,6 +55,7 @@ export interface Customer {
   customer_since: string;
   created_at: string;
   updated_at: string;
+  recorded_at?: string;
 }
 
 export interface Activity {
@@ -70,7 +72,9 @@ export interface Activity {
   follow_up_date: string | null;
   outcome: string | null;
   created_at: string;
+  recorded_at?: string;
 }
+
 
 export interface Database {
   public: {

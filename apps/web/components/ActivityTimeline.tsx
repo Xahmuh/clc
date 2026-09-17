@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   Clock,
   Send,
+  Trash2,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/auth-context';
@@ -38,7 +39,7 @@ export function ActivityTimeline({
   activities,
   onActivityAdded,
 }: ActivityTimelineProps) {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { t, formatActivityType } = useLanguage();
   const supabase = createClient();
 
@@ -46,8 +47,11 @@ export function ActivityTimeline({
   const [description, setDescription] = useState('');
   const [outcome, setOutcome] = useState('');
   const [followUpDate, setFollowUpDate] = useState('');
+  const [activityDate, setActivityDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,6 +62,10 @@ export function ActivityTimeline({
     setIsSubmitting(true);
 
     try {
+      const customActDate = activityDate
+        ? new Date(activityDate + 'T12:00:00Z').toISOString()
+        : new Date().toISOString();
+
       const { error: insertError } = await supabase.from('activities').insert({
         employee_id: user.id,
         related_entity_type: entityType,
@@ -66,6 +74,7 @@ export function ActivityTimeline({
         description: description.trim(),
         outcome: outcome.trim() || null,
         follow_up_date: followUpDate || null,
+        activity_date: customActDate,
       });
 
       if (insertError) throw insertError;
@@ -73,11 +82,26 @@ export function ActivityTimeline({
       setDescription('');
       setOutcome('');
       setFollowUpDate('');
+      setActivityDate(new Date().toISOString().split('T')[0]);
       onActivityAdded();
     } catch (err: any) {
       setError(err.message || 'Failed to log activity');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteActivity = async (actId: string) => {
+    setDeletingId(actId);
+    try {
+      const { error: delErr } = await supabase.from('activities').delete().eq('id', actId);
+      if (delErr) throw delErr;
+      setConfirmDeleteId(null);
+      onActivityAdded();
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete activity log');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -129,7 +153,7 @@ export function ActivityTimeline({
             className="w-full px-3 py-2 text-sm border border-gray-200 rounded-button focus:outline-none focus:border-ink-900 resize-none"
           />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <input
               type="text"
               value={outcome}
@@ -137,6 +161,16 @@ export function ActivityTimeline({
               placeholder={t('activity_outcome_placeholder')}
               className="px-3 py-1.5 text-xs border border-gray-200 rounded-button focus:outline-none focus:border-ink-900"
             />
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-gray-500 shrink-0">{t('field_registration_date')}:</label>
+              <input
+                type="date"
+                value={activityDate}
+                onChange={(e) => setActivityDate(e.target.value)}
+                className="w-full px-2 py-1 text-xs border border-gray-200 rounded-button focus:outline-none focus:border-ink-900 bg-white"
+                title={t('backdated_date_hint')}
+              />
+            </div>
             <div className="flex items-center gap-2">
               <label className="text-xs text-gray-500 shrink-0">{t('follow_up_date')}:</label>
               <input
@@ -180,6 +214,11 @@ export function ActivityTimeline({
                 timeStyle: 'short',
               }).format(new Date(act.activity_date));
 
+              const recordTimestamp = (act as any).recorded_at || act.created_at;
+              const isWithin24Hours =
+                Date.now() - new Date(recordTimestamp).getTime() < 24 * 60 * 60 * 1000;
+              const canDeleteAct = isAdmin || (act.employee_id === user?.id && isWithin24Hours);
+
               return (
                 <div key={act.id} className="relative group">
                   {/* Timeline Dot */}
@@ -197,7 +236,39 @@ export function ActivityTimeline({
                           <span>• {act.employee.full_name}</span>
                         )}
                       </div>
-                      <span className="text-gray-400">{formattedDate}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-400">{formattedDate}</span>
+                        {canDeleteAct && (
+                          confirmDeleteId === act.id ? (
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteActivity(act.id)}
+                                disabled={deletingId === act.id}
+                                className="px-2 py-0.5 text-[11px] font-semibold bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                              >
+                                {deletingId === act.id ? '...' : t('delete')}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setConfirmDeleteId(null)}
+                                className="px-1.5 py-0.5 text-[11px] text-gray-400 hover:text-ink-900"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setConfirmDeleteId(act.id)}
+                              className="text-gray-300 hover:text-red-600 transition-colors p-1"
+                              title={t('delete_activity')}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          )
+                        )}
+                      </div>
                     </div>
 
                     <p className="text-sm text-ink-900 leading-relaxed">

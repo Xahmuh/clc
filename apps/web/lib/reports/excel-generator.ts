@@ -203,24 +203,12 @@ function getExcelLabels(lang: 'ar' | 'en') {
       metaAllEmployees: 'All Company Representatives',
       metaSystemAdmin: 'System Administrator',
       // KPI Cards
-      kpiTotalTitle: 'Total Field Activities',
-      kpiTotalSub: 'TOTAL TOUCHPOINTS',
-      kpiTotalDesc: 'All recorded field activity entries',
-      kpiVisitsTitle: 'Site Visits & GPS',
-      kpiVisitsSub: 'SITE VISITS & GPS',
-      kpiVisitsDesc: (rate: string, count: number) => `GPS Verified: ${rate}% (${count})`,
-      kpiCallsTitle: 'Phone Calls',
-      kpiCallsSub: 'PHONE CALLS',
-      kpiCallsDesc: 'Outbound calls and phone contacts',
-      kpiMeetingsTitle: 'Meetings & Emails',
-      kpiMeetingsSub: 'MEETINGS & EMAILS',
-      kpiMeetingsDesc: (m: number, e: number) => `${m} meeting(s) • ${e} email(s)`,
-      kpiFollowupsTitle: 'Scheduled Follow-ups',
-      kpiFollowupsSub: 'SCHEDULED FOLLOW-UPS',
-      kpiFollowupsDesc: 'Future actions and follow-ups',
-      kpiAccountsTitle: 'Companies & Accounts',
-      kpiAccountsSub: 'UNIQUE ACCOUNTS',
-      kpiAccountsDesc: 'Client and company coverage',
+      kpiTotalTitle: 'TOTAL FIELD ACTIVITIES',
+      kpiVisitsTitle: 'SITE VISITS & GPS',
+      kpiCallsTitle: 'PHONE CALLS',
+      kpiMeetingsTitle: 'MEETINGS & EMAILS',
+      kpiFollowupsTitle: 'SCHEDULED FOLLOW-UPS',
+      kpiAccountsTitle: 'COMPANIES & ACCOUNTS',
       // Activity Breakdown
       actBreakdownTitle: 'Activity Type Distribution & GPS Verification Rate',
       actHeaderType: 'Activity Type',
@@ -291,10 +279,10 @@ function getExcelLabels(lang: 'ar' | 'en') {
       // Accounts Sheet (Leads & Customers)
       accountsTitleBanner: 'CLC CONTRACTING — REGISTERED LEADS & CUSTOMERS DIRECTORY',
       accountsSubtitleBanner: 'Complete Record of Accounts, Contact Details, and Contract Values Registered in the Selected Period',
-      accountsKpiTotal: 'Total Registered Accounts:',
-      accountsKpiLeads: 'New Leads & Opportunities:',
-      accountsKpiCustomers: 'Existing Accounts:',
-      accountsKpiValue: 'Total Estimated Pipeline Value:',
+      accountsKpiTotal: 'TOTAL REGISTERED ACCOUNTS:',
+      accountsKpiLeads: 'NEW LEADS & OPPORTUNITIES:',
+      accountsKpiCustomers: 'EXISTING ACCOUNTS:',
+      accountsKpiValue: 'TOTAL ESTIMATED PIPELINE VALUE:',
       accountsHeaderIdx: '#',
       accountsHeaderType: 'Account Type',
       accountsHeaderDate: 'Registration Date',
@@ -335,23 +323,11 @@ function getExcelLabels(lang: 'ar' | 'en') {
     metaAllEmployees: 'كافة موظفي الشركة',
     metaSystemAdmin: 'إدارة النظام',
     kpiTotalTitle: 'إجمالي الأنشطة الميدانية',
-    kpiTotalSub: 'TOTAL TOUCHPOINTS',
-    kpiTotalDesc: 'سجلات النشاط الميداني المسجلة',
     kpiVisitsTitle: 'الزيارات وموقع GPS',
-    kpiVisitsSub: 'SITE VISITS & GPS',
-    kpiVisitsDesc: (rate: string, count: number) => `موثقة بـ GPS: ${rate}% (${count})`,
     kpiCallsTitle: 'المكالمات الهاتفية',
-    kpiCallsSub: 'PHONE CALLS',
-    kpiCallsDesc: 'اتصالات صادرة وتواصل هاتفي',
     kpiMeetingsTitle: 'الاجتماعات والمراسلات',
-    kpiMeetingsSub: 'MEETINGS & EMAILS',
-    kpiMeetingsDesc: (m: number, e: number) => `${m} اجتماع • ${e} إيميل`,
     kpiFollowupsTitle: 'المتابعات المجدولة',
-    kpiFollowupsSub: 'SCHEDULED FOLLOW-UPS',
-    kpiFollowupsDesc: 'إجراءات ومتابعات مستقبلية',
     kpiAccountsTitle: 'الشركات والعملاء',
-    kpiAccountsSub: 'UNIQUE ACCOUNTS',
-    kpiAccountsDesc: 'تغطية العملاء والشركات المستهدفة',
     actBreakdownTitle: 'توزيع أنواع الأنشطة ونسبة توثيق الموقع الجغرافي (GPS)',
     actHeaderType: 'نوع النشاط / Activity Type',
     actHeaderCount: 'العدد الإجمالي / Count',
@@ -561,65 +537,48 @@ export async function generateExecutiveReportWorkbook(
   });
 
   // KPI CARDS SECTION (Rows 10-12)
+  // KPI CARDS SECTION (Rows 10-11)
   const kpiCards = [
     {
       title: L.kpiTotalTitle,
-      subTitle: L.kpiTotalSub,
       value: totalCount,
-      sub: L.kpiTotalDesc,
       cellTop: 'B10',
       cellVal: 'B11',
-      cellSub: 'B12',
       format: '#,##0',
     },
     {
       title: L.kpiVisitsTitle,
-      subTitle: L.kpiVisitsSub,
       value: visitCount,
-      sub: L.kpiVisitsDesc((gpsComplianceRate * 100).toFixed(1), gpsVerifiedCount),
       cellTop: 'C10',
       cellVal: 'C11',
-      cellSub: 'C12',
       format: '#,##0',
     },
     {
       title: L.kpiCallsTitle,
-      subTitle: L.kpiCallsSub,
       value: callCount,
-      sub: L.kpiCallsDesc,
       cellTop: 'D10',
       cellVal: 'D11',
-      cellSub: 'D12',
       format: '#,##0',
     },
     {
       title: L.kpiMeetingsTitle,
-      subTitle: L.kpiMeetingsSub,
       value: meetingCount + emailCount,
-      sub: L.kpiMeetingsDesc(meetingCount, emailCount),
       cellTop: 'E10',
       cellVal: 'E11',
-      cellSub: 'E12',
       format: '#,##0',
     },
     {
       title: L.kpiFollowupsTitle,
-      subTitle: L.kpiFollowupsSub,
       value: followUpCount,
-      sub: L.kpiFollowupsDesc,
       cellTop: 'F10',
       cellVal: 'F11',
-      cellSub: 'F12',
       format: '#,##0',
     },
     {
       title: L.kpiAccountsTitle,
-      subTitle: L.kpiAccountsSub,
       value: uniqueCompaniesCount,
-      sub: L.kpiAccountsDesc,
       cellTop: 'G10',
       cellVal: 'G11',
-      cellSub: 'G12',
       format: '#,##0',
     },
   ];
@@ -629,15 +588,14 @@ export async function generateExecutiveReportWorkbook(
     const cardBg = isFeatured ? COLORS.ink900 : COLORS.cream100;
     const titleColor = isFeatured ? COLORS.gray400 : COLORS.gray500;
     const valColor = isFeatured ? COLORS.white : COLORS.ink900;
-    const subColor = isFeatured ? COLORS.gray400 : COLORS.gray500;
     const cardBorder: ExcelJS.Border = isFeatured
       ? { style: 'thin', color: { argb: COLORS.ink900 } }
       : { style: 'thin', color: { argb: COLORS.cream200 } };
 
-    // Title row
+    // Title row (All Capital Letters, no subtitles)
     const cTop = kpiSheet.getCell(card.cellTop);
-    cTop.value = `${card.title}\n${card.subTitle}`;
-    cTop.font = { name: FONT_FAMILY, size: 8, bold: true, color: { argb: titleColor } };
+    cTop.value = card.title.toUpperCase();
+    cTop.font = { name: FONT_FAMILY, size: 8.5, bold: true, color: { argb: titleColor } };
     cTop.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: cardBg } };
     cTop.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true, readingOrder: readOrder };
     cTop.border = { top: cardBorder, left: cardBorder, right: cardBorder };
@@ -646,23 +604,14 @@ export async function generateExecutiveReportWorkbook(
     const cVal = kpiSheet.getCell(card.cellVal);
     cVal.value = card.value;
     cVal.numFmt = card.format;
-    cVal.font = { name: FONT_FAMILY, size: 19, bold: true, color: { argb: valColor } };
+    cVal.font = { name: FONT_FAMILY, size: 20, bold: true, color: { argb: valColor } };
     cVal.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: cardBg } };
     cVal.alignment = { horizontal: 'center', vertical: 'middle' };
-    cVal.border = { left: cardBorder, right: cardBorder };
-
-    // Subtitle row
-    const cSub = kpiSheet.getCell(card.cellSub);
-    cSub.value = card.sub;
-    cSub.font = { name: FONT_FAMILY, size: 7.5, italic: true, color: { argb: subColor } };
-    cSub.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: cardBg } };
-    cSub.alignment = { horizontal: 'center', vertical: 'middle', readingOrder: readOrder };
-    cSub.border = { bottom: cardBorder, left: cardBorder, right: cardBorder };
+    cVal.border = { bottom: cardBorder, left: cardBorder, right: cardBorder };
   });
 
-  kpiSheet.getRow(10).height = 24;
-  kpiSheet.getRow(11).height = 28;
-  kpiSheet.getRow(12).height = 20;
+  kpiSheet.getRow(10).height = 26;
+  kpiSheet.getRow(11).height = 34;
 
   // ACTIVITY BREAKDOWN SUMMARY TABLE (Rows 15-21)
   const actTypesList = [

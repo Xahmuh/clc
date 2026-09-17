@@ -1,14 +1,16 @@
 'use client';
 
 import React, { useState } from 'react';
-import { AlertTriangle, Clock, Trash2, X } from 'lucide-react';
+import { AlertTriangle, Clock, Trash2, X, ShieldCheck } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/lib/auth-context';
 import { useLanguage } from '@/lib/language-context';
 
 interface DeleteConfirmModalProps {
   isOpen: boolean;
   title: string;
   createdAt: string;
+  recordedAt?: string;
   entityType: 'lead' | 'customer';
   entityId: string;
   onClose: () => void;
@@ -19,11 +21,13 @@ export function DeleteConfirmModal({
   isOpen,
   title,
   createdAt,
+  recordedAt,
   entityType,
   entityId,
   onClose,
   onDeleted,
 }: DeleteConfirmModalProps) {
+  const { user, isAdmin } = useAuth();
   const { t, language } = useLanguage();
   const supabase = createClient();
 
@@ -32,15 +36,18 @@ export function DeleteConfirmModal({
 
   if (!isOpen) return null;
 
-  const createdTime = new Date(createdAt).getTime();
+  // Use recordedAt (physical creation time) if available, otherwise fallback to createdAt
+  const recordTimestamp = recordedAt || createdAt;
+  const recordedTime = new Date(recordTimestamp).getTime();
   const now = Date.now();
-  const diffMs = now - createdTime;
+  const diffMs = Math.max(0, now - recordedTime);
   const isWithin24h = diffMs < 24 * 60 * 60 * 1000;
+  const canDelete = isAdmin || isWithin24h;
   const hoursLeft = Math.max(0, Math.floor((24 * 60 * 60 * 1000 - diffMs) / (60 * 60 * 1000)));
   const minutesLeft = Math.max(0, Math.floor(((24 * 60 * 60 * 1000 - diffMs) % (60 * 60 * 1000)) / (60 * 1000)));
 
   const handleDelete = async () => {
-    if (!isWithin24h) {
+    if (!canDelete) {
       setError(t('delete_time_expired'));
       return;
     }
@@ -118,8 +125,17 @@ export function DeleteConfirmModal({
             {t('delete_confirm_msg')}
           </p>
 
-          {/* 24-Hour Rule Indicator */}
-          {isWithin24h ? (
+          {/* Admin or 24-Hour Rule Indicator */}
+          {isAdmin ? (
+            <div className="flex items-center gap-2 p-2.5 bg-blue-50 border border-blue-200 rounded-card text-xs text-blue-800">
+              <ShieldCheck className="h-4 w-4 shrink-0 text-blue-600" />
+              <span>
+                {language === 'ar'
+                  ? 'بصفتك مدير النظام، يحق لك حذف السجل بشكل كامل في أي وقت.'
+                  : 'As an Administrator, you have full permission to delete this record at any time.'}
+              </span>
+            </div>
+          ) : isWithin24h ? (
             <div className="flex items-center gap-2 p-2.5 bg-amber-50 border border-amber-200 rounded-card text-xs text-amber-800">
               <Clock className="h-4 w-4 shrink-0 text-amber-600" />
               <span>
@@ -147,7 +163,7 @@ export function DeleteConfirmModal({
           <button
             type="button"
             onClick={handleDelete}
-            disabled={!isWithin24h || isDeleting}
+            disabled={!canDelete || isDeleting}
             className="px-4 py-2 text-xs font-semibold bg-red-600 text-white rounded-button hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
           >
             <Trash2 className="h-3.5 w-3.5" />

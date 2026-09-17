@@ -6,17 +6,67 @@ import {
   Image,
   TouchableOpacity,
   Modal,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, type } from '../theme';
+import { useAuth } from '../lib/auth-context';
+import { useLanguage } from '../lib/language-context';
+import { supabase } from '../lib/supabase';
 import type { Activity } from '../types/database';
 
 interface ActivityItemProps {
   activity: Activity;
+  onDeleted?: (activityId: string) => void;
 }
 
-export function ActivityItem({ activity }: ActivityItemProps) {
+export function ActivityItem({ activity, onDeleted }: ActivityItemProps) {
   const [isViewerOpen, setIsViewerOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { user, isAdmin } = useAuth();
+  const { t } = useLanguage();
+
+  const recDate = activity.recorded_at || activity.created_at;
+  const isWithin24Hours = recDate
+    ? Date.now() - new Date(recDate).getTime() < 24 * 60 * 60 * 1000
+    : false;
+
+  const canDelete = isAdmin || (user?.id === activity.employee_id && isWithin24Hours);
+
+  const handleDelete = () => {
+    Alert.alert(
+      t('delete_activity'),
+      t('delete_activity_confirm'),
+      [
+        { text: t('cancel'), style: 'cancel' },
+        {
+          text: t('delete'),
+          style: 'destructive',
+          onPress: async () => {
+            setIsDeleting(true);
+            try {
+              const { error } = await supabase
+                .from('activities')
+                .delete()
+                .eq('id', activity.id);
+
+              if (error) {
+                Alert.alert(t('error'), error.message);
+              } else {
+                Alert.alert(t('success'), t('activity_deleted'));
+                onDeleted?.(activity.id);
+              }
+            } catch (err: any) {
+              Alert.alert(t('error'), err.message || 'Failed to delete');
+            } finally {
+              setIsDeleting(false);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const renderIcon = (actType: string) => {
     switch (actType) {
@@ -50,7 +100,23 @@ export function ActivityItem({ activity }: ActivityItemProps) {
           <Text style={styles.activityType}>
             {activity.activity_type.toUpperCase()}
           </Text>
-          <Text style={styles.dateText}>{formattedDate}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={styles.dateText}>{formattedDate}</Text>
+            {canDelete && (
+              <TouchableOpacity
+                style={styles.deleteBtn}
+                onPress={handleDelete}
+                disabled={isDeleting}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                {isDeleting ? (
+                  <ActivityIndicator size="small" color="#DC2626" />
+                ) : (
+                  <Ionicons name="trash-outline" size={15} color="#DC2626" />
+                )}
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
 
         {activity.description ? (
@@ -262,4 +328,9 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     marginTop: 4,
   },
+  deleteBtn: {
+    marginLeft: 8,
+    padding: 2,
+  },
 });
+

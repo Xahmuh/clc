@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   RefreshControl,
+  Alert,
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
@@ -14,6 +15,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
 import { useLanguage } from '../lib/language-context';
+import { useAuth } from '../lib/auth-context';
 import { colors, radius, type } from '../theme';
 import { ActivityItem } from '../components/ActivityItem';
 import { TransferAccountModal } from '../components/TransferAccountModal';
@@ -29,6 +31,7 @@ export function CustomerDetailScreen() {
   const navigation = useNavigation<CustomerDetailNavProp>();
   const { customerId } = route.params;
   const { t, formatDistrict, language } = useLanguage();
+  const { user, isAdmin } = useAuth();
 
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [district, setDistrict] = useState<District | null>(null);
@@ -36,6 +39,45 @@ export function CustomerDetailScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isTransferModalVisible, setIsTransferModalVisible] = useState(false);
+  const [isDeletingCustomer, setIsDeletingCustomer] = useState(false);
+
+  const custRecordedAt = customer?.recorded_at || customer?.created_at;
+  const isCustWithin24h = custRecordedAt
+    ? Date.now() - new Date(custRecordedAt).getTime() < 24 * 60 * 60 * 1000
+    : false;
+  const canDeleteCustomer = isAdmin || (customer?.assigned_to === user?.id && isCustWithin24h);
+
+  const handleDeleteCustomer = () => {
+    if (!customer) return;
+    Alert.alert(
+      t('delete_customer'),
+      t('delete_confirm_msg'),
+      [
+        { text: t('cancel'), style: 'cancel' },
+        {
+          text: t('delete'),
+          style: 'destructive',
+          onPress: async () => {
+            setIsDeletingCustomer(true);
+            try {
+              const { error } = await supabase.from('customers').delete().eq('id', customer.id);
+              if (error) {
+                Alert.alert(t('error'), error.message);
+              } else {
+                Alert.alert(t('success'), t('deleted_successfully'));
+                navigation.goBack();
+              }
+            } catch (err: any) {
+              Alert.alert(t('error'), err.message || 'Failed to delete customer');
+            } finally {
+              setIsDeletingCustomer(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
 
   const loadCustomerDetails = async () => {
     try {
@@ -234,6 +276,25 @@ export function CustomerDetailScreen() {
             <Ionicons name="swap-horizontal-outline" size={16} color={colors.ink} />
             <Text style={styles.transferBtnText}>{t('transfer_customer')}</Text>
           </TouchableOpacity>
+
+          {/* Delete Customer (Within 24h of recording or Admin) */}
+          {canDeleteCustomer && (
+            <TouchableOpacity
+              style={styles.deleteCustomerBtn}
+              onPress={handleDeleteCustomer}
+              disabled={isDeletingCustomer}
+              activeOpacity={0.85}
+            >
+              {isDeletingCustomer ? (
+                <ActivityIndicator size="small" color="#DC2626" />
+              ) : (
+                <>
+                  <Ionicons name="trash-outline" size={16} color="#DC2626" />
+                  <Text style={styles.deleteCustomerBtnText}>{t('delete_customer')}</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Activity Timeline Section */}
@@ -253,10 +314,19 @@ export function CustomerDetailScreen() {
               </Text>
             </View>
           ) : (
-            activities.map((act) => <ActivityItem key={act.id} activity={act} />)
+            activities.map((act) => (
+              <ActivityItem
+                key={act.id}
+                activity={act}
+                onDeleted={(deletedId) =>
+                  setActivities((prev) => prev.filter((a) => a.id !== deletedId))
+                }
+              />
+            ))
           )}
         </View>
       </ScrollView>
+
 
       {customer && (
         <TransferAccountModal
@@ -465,4 +535,22 @@ const styles = StyleSheet.create({
     marginTop: 4,
     textAlign: 'center',
   },
+  deleteCustomerBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FCA5A5',
+    paddingVertical: 12,
+    borderRadius: radius.button,
+    marginTop: 8,
+  },
+  deleteCustomerBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#DC2626',
+    marginLeft: 6,
+  },
 });
+

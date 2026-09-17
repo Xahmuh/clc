@@ -19,6 +19,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/lib/auth-context';
 import { useLanguage } from '@/lib/language-context';
 import { ActivityTimeline } from '@/components/ActivityTimeline';
 import { EditLeadModal } from '@/components/EditLeadModal';
@@ -38,6 +39,7 @@ function LeadDetailPage() {
   const params = useParams();
   const router = useRouter();
   const leadId = params.id as string;
+  const { isAdmin } = useAuth();
   const { t, formatDistrict, formatStatus } = useLanguage();
   const supabase = createClient();
 
@@ -232,12 +234,14 @@ function LeadDetailPage() {
               <span>{t('edit_lead')}</span>
             </button>
 
-            {/* Delete Lead Button (Active only within 24 hours of creation) */}
+            {/* Delete Lead Button (Active within 24 hours of recording or for admin) */}
             {(() => {
+              const recordTimestamp = (lead as any).recorded_at || lead.created_at;
               const isWithin24Hours =
-                Date.now() - new Date(lead.created_at).getTime() < 24 * 60 * 60 * 1000;
+                Date.now() - new Date(recordTimestamp).getTime() < 24 * 60 * 60 * 1000;
+              const canDelete = isAdmin || isWithin24Hours;
 
-              return isWithin24Hours ? (
+              return canDelete ? (
                 <button
                   onClick={() => setIsDeleteModalOpen(true)}
                   className="flex items-center gap-1.5 px-3 py-2 bg-white border border-red-200 text-red-600 rounded-button text-xs font-semibold hover:bg-red-50 transition-colors"
@@ -426,6 +430,7 @@ function LeadDetailPage() {
         isOpen={isDeleteModalOpen}
         title={lead.company_name}
         createdAt={lead.created_at}
+        recordedAt={(lead as any).recorded_at}
         entityType="lead"
         entityId={lead.id}
         onClose={() => setIsDeleteModalOpen(false)}

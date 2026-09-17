@@ -26,6 +26,7 @@ export function CreateCustomerModal({ isOpen, onClose, onCreated }: CreateCustom
   const [address, setAddress] = useState('');
   const [districtId, setDistrictId] = useState<number | ''>('');
   const [assignedTo, setAssignedTo] = useState<string>('');
+  const [customerSince, setCustomerSince] = useState<string>(new Date().toISOString().split('T')[0]);
 
   const [districts, setDistricts] = useState<District[]>([]);
   const [employees, setEmployees] = useState<Profile[]>([]);
@@ -62,6 +63,8 @@ export function CreateCustomerModal({ isOpen, onClose, onCreated }: CreateCustom
 
     try {
       const targetAssignedTo = isManager ? assignedTo || user?.id : user?.id;
+      const dateVal = customerSince || new Date().toISOString().split('T')[0];
+      const customCreatedAt = new Date(dateVal + 'T12:00:00Z').toISOString();
 
       const { error: insertError } = await supabase.from('customers').insert({
         company_name: companyName.trim(),
@@ -71,7 +74,8 @@ export function CreateCustomerModal({ isOpen, onClose, onCreated }: CreateCustom
         address: address.trim() || null,
         district_id: districtId ? Number(districtId) : null,
         assigned_to: targetAssignedTo || null,
-        customer_since: new Date().toISOString().split('T')[0],
+        customer_since: dateVal,
+        created_at: customCreatedAt,
       });
 
       if (insertError) throw insertError;
@@ -81,6 +85,7 @@ export function CreateCustomerModal({ isOpen, onClose, onCreated }: CreateCustom
       setPhone('');
       setEmail('');
       setAddress('');
+      setCustomerSince(new Date().toISOString().split('T')[0]);
       onCreated();
       onClose();
     } catch (err: any) {
@@ -175,6 +180,21 @@ export function CreateCustomerModal({ isOpen, onClose, onCreated }: CreateCustom
               placeholder="King Fahd Road, Al-Olaya..."
               className="w-full px-3 py-2 text-sm border border-gray-200 rounded-button focus:outline-none focus:border-ink-900"
             />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">
+              {t('field_customer_since')}
+            </label>
+            <input
+              type="date"
+              value={customerSince}
+              onChange={(e) => setCustomerSince(e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-button focus:outline-none focus:border-ink-900 bg-white"
+            />
+            <p className="text-[11px] text-gray-400 mt-1">
+              {t('backdated_date_hint')}
+            </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

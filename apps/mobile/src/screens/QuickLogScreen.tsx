@@ -59,6 +59,7 @@ export function QuickLogScreen() {
   const [notes, setNotes] = useState('');
   const [outcome, setOutcome] = useState('');
   const [followUpDays, setFollowUpDays] = useState<number | null>(null);
+  const [activityDate, setActivityDate] = useState<string>(new Date().toISOString().split('T')[0]);
 
   // Photo Attachment
   const [selectedPhotoUri, setSelectedPhotoUri] = useState<string | null>(null);
@@ -220,12 +221,16 @@ export function QuickLogScreen() {
       computedFollowUpDate = d.toISOString().split('T')[0];
     }
 
+    const customActDate = activityDate
+      ? new Date(activityDate + 'T12:00:00Z').toISOString()
+      : new Date().toISOString();
+
     const payload = {
       employee_id: user.id,
       related_entity_type: entityType,
       related_entity_id: selectedEntityId,
       activity_type: activityType,
-      activity_date: new Date().toISOString(),
+      activity_date: customActDate,
       description: notes.trim(),
       latitude: activityType === 'visit' && locationResult?.latitude ? locationResult.latitude : null,
       longitude: activityType === 'visit' && locationResult?.longitude ? locationResult.longitude : null,
@@ -257,6 +262,7 @@ export function QuickLogScreen() {
       setFollowUpDays(null);
       setSelectedPhotoUri(null);
       setSelectedPhotoBase64(null);
+      setActivityDate(new Date().toISOString().split('T')[0]);
       if (navigation.canGoBack()) {
         navigation.goBack();
       }
@@ -573,6 +579,21 @@ export function QuickLogScreen() {
             value={outcome}
             onChangeText={setOutcome}
           />
+        </View>
+
+        {/* Activity Date (Supports retroactive recording باثر رجعي) */}
+        <View style={styles.section}>
+          <Text style={styles.label}>{t('field_date')}</Text>
+          <TextInput
+            style={styles.textInput}
+            placeholder="YYYY-MM-DD"
+            placeholderTextColor={colors.textMuted}
+            value={activityDate}
+            onChangeText={setActivityDate}
+          />
+          <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 4 }}>
+            {t('backdated_date_hint')} (YYYY-MM-DD)
+          </Text>
         </View>
 
         {/* 5. Site Photo / Business Card Attachment */}

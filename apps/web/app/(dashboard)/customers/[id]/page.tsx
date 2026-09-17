@@ -16,6 +16,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/lib/auth-context';
 import { useLanguage } from '@/lib/language-context';
 import { ActivityTimeline } from '@/components/ActivityTimeline';
 import { EditCustomerModal } from '@/components/EditCustomerModal';
@@ -26,6 +27,7 @@ export default function CustomerDetailPage() {
   const params = useParams();
   const router = useRouter();
   const customerId = params.id as string;
+  const { isAdmin } = useAuth();
   const { t, formatDistrict } = useLanguage();
   const supabase = createClient();
 
@@ -164,12 +166,14 @@ export default function CustomerDetailPage() {
               <span>{t('edit_customer')}</span>
             </button>
 
-            {/* Delete Customer Button (Active only within 24 hours of creation) */}
+            {/* Delete Customer Button (Active within 24 hours of recording or for admin) */}
             {(() => {
+              const recordTimestamp = (customer as any).recorded_at || customer.created_at;
               const isWithin24Hours =
-                Date.now() - new Date(customer.created_at).getTime() < 24 * 60 * 60 * 1000;
+                Date.now() - new Date(recordTimestamp).getTime() < 24 * 60 * 60 * 1000;
+              const canDelete = isAdmin || isWithin24Hours;
 
-              return isWithin24Hours ? (
+              return canDelete ? (
                 <button
                   onClick={() => setIsDeleteModalOpen(true)}
                   className="flex items-center gap-1.5 px-3 py-2 bg-white border border-red-200 text-red-600 rounded-button text-xs font-semibold hover:bg-red-50 transition-colors"
@@ -302,6 +306,7 @@ export default function CustomerDetailPage() {
         isOpen={isDeleteModalOpen}
         title={customer.company_name}
         createdAt={customer.created_at}
+        recordedAt={(customer as any).recorded_at}
         entityType="customer"
         entityId={customer.id}
         onClose={() => setIsDeleteModalOpen(false)}

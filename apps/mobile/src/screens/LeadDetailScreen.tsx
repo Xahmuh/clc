@@ -15,6 +15,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
 import { useLanguage } from '../lib/language-context';
+import { useAuth } from '../lib/auth-context';
 import { colors, radius, type } from '../theme';
 import { ActivityItem } from '../components/ActivityItem';
 import { TransferAccountModal } from '../components/TransferAccountModal';
@@ -39,6 +40,7 @@ export function LeadDetailScreen() {
   const navigation = useNavigation<LeadDetailNavProp>();
   const { leadId } = route.params;
   const { t, formatDistrict, formatStatus, language } = useLanguage();
+  const { user, isAdmin } = useAuth();
 
   const [lead, setLead] = useState<Lead | null>(null);
   const [district, setDistrict] = useState<District | null>(null);
@@ -48,6 +50,45 @@ export function LeadDetailScreen() {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
   const [isTransferModalVisible, setIsTransferModalVisible] = useState(false);
+  const [isDeletingLead, setIsDeletingLead] = useState(false);
+
+  const leadRecordedAt = lead?.recorded_at || lead?.created_at;
+  const isLeadWithin24h = leadRecordedAt
+    ? Date.now() - new Date(leadRecordedAt).getTime() < 24 * 60 * 60 * 1000
+    : false;
+  const canDeleteLead = isAdmin || (lead?.assigned_to === user?.id && isLeadWithin24h);
+
+  const handleDeleteLead = () => {
+    if (!lead) return;
+    Alert.alert(
+      t('delete_lead'),
+      t('delete_confirm_msg'),
+      [
+        { text: t('cancel'), style: 'cancel' },
+        {
+          text: t('delete'),
+          style: 'destructive',
+          onPress: async () => {
+            setIsDeletingLead(true);
+            try {
+              const { error } = await supabase.from('leads').delete().eq('id', lead.id);
+              if (error) {
+                Alert.alert(t('error'), error.message);
+              } else {
+                Alert.alert(t('success'), t('deleted_successfully'));
+                navigation.goBack();
+              }
+            } catch (err: any) {
+              Alert.alert(t('error'), err.message || 'Failed to delete lead');
+            } finally {
+              setIsDeletingLead(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
 
   const loadLeadDetails = async () => {
     try {
@@ -416,6 +457,25 @@ export function LeadDetailScreen() {
               <Ionicons name="swap-horizontal-outline" size={16} color={colors.ink} />
               <Text style={styles.transferBtnText}>{t('transfer_lead')}</Text>
             </TouchableOpacity>
+
+            {/* Delete Lead (Within 24h of recording or Admin) */}
+            {canDeleteLead && (
+              <TouchableOpacity
+                style={styles.deleteLeadBtn}
+                onPress={handleDeleteLead}
+                disabled={isDeletingLead}
+                activeOpacity={0.85}
+              >
+                {isDeletingLead ? (
+                  <ActivityIndicator size="small" color="#DC2626" />
+                ) : (
+                  <>
+                    <Ionicons name="trash-outline" size={16} color="#DC2626" />
+                    <Text style={styles.deleteLeadBtnText}>{t('delete_lead')}</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
@@ -436,9 +496,18 @@ export function LeadDetailScreen() {
               </Text>
             </View>
           ) : (
-            activities.map((act) => <ActivityItem key={act.id} activity={act} />)
+            activities.map((act) => (
+              <ActivityItem
+                key={act.id}
+                activity={act}
+                onDeleted={(deletedId) =>
+                  setActivities((prev) => prev.filter((a) => a.id !== deletedId))
+                }
+              />
+            ))
           )}
         </View>
+
       </ScrollView>
 
       {lead && (
@@ -744,4 +813,22 @@ const styles = StyleSheet.create({
     marginTop: 4,
     textAlign: 'center',
   },
+  deleteLeadBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FCA5A5',
+    paddingVertical: 12,
+    borderRadius: radius.button,
+    marginTop: 8,
+  },
+  deleteLeadBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#DC2626',
+    marginLeft: 6,
+  },
 });
+

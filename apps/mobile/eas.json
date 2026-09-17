@@ -1,0 +1,33 @@
+{
+  "cli": {
+    "version": ">= 20.1.0"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://meujwpicsfxgkphvrojs.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_61JunVsMNH4gsYu5y0SBXw_dNtYXaKT"
+      }
+    },
+    "production": {
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://meujwpicsfxgkphvrojs.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_61JunVsMNH4gsYu5y0SBXw_dNtYXaKT"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

@@ -47,6 +47,7 @@ export function CreateAccountModal({
   const [projectType, setProjectType] = useState('');
   const [estimatedValue, setEstimatedValue] = useState('');
   const [notes, setNotes] = useState('');
+  const [recordDate, setRecordDate] = useState<string>(new Date().toISOString().split('T')[0]);
 
   // District Selection
   const [districts, setDistricts] = useState<District[]>([]);
@@ -95,6 +96,7 @@ export function CreateAccountModal({
     setProjectType('');
     setEstimatedValue('');
     setNotes('');
+    setRecordDate(new Date().toISOString().split('T')[0]);
     setSelectedDistrict(null);
     setDistrictSearch('');
     setIsDistrictPickerOpen(false);
@@ -206,6 +208,10 @@ export function CreateAccountModal({
 
       // 2. Insert Lead or Customer
       if (accountType === 'lead') {
+        const customCreatedAt = recordDate
+          ? new Date(recordDate + 'T12:00:00Z').toISOString()
+          : new Date().toISOString();
+
         const payload = {
           company_name: companyName.trim(),
           contact_person: contactPerson.trim() || null,
@@ -218,6 +224,7 @@ export function CreateAccountModal({
           district_id: resolvedDistrictId,
           assigned_to: user.id,
           notes: notes.trim() || null,
+          created_at: customCreatedAt,
         };
 
         const { error: insertError } = await supabase.from('leads').insert(payload as any);
@@ -225,6 +232,9 @@ export function CreateAccountModal({
 
         Alert.alert('Lead Created', `Successfully added ${companyName.trim()} to your leads.`);
       } else {
+        const dateVal = recordDate || new Date().toISOString().split('T')[0];
+        const customCreatedAt = new Date(dateVal + 'T12:00:00Z').toISOString();
+
         const payload = {
           company_name: companyName.trim(),
           contact_person: contactPerson.trim() || null,
@@ -233,6 +243,8 @@ export function CreateAccountModal({
           address: address.trim() || null,
           district_id: resolvedDistrictId,
           assigned_to: user.id,
+          customer_since: dateVal,
+          created_at: customCreatedAt,
         };
 
         const { error: insertError } = await supabase.from('customers').insert(payload as any);
@@ -714,6 +726,23 @@ export function CreateAccountModal({
                 />
               </View>
             )}
+
+            {/* Record / Registration Date (Supports retroactive recording باثر رجعي) */}
+            <View style={styles.field}>
+              <Text style={styles.fieldLabel}>
+                {accountType === 'lead' ? t('field_registration_date') : t('field_customer_since')}
+              </Text>
+              <TextInput
+                style={styles.input}
+                placeholder="YYYY-MM-DD"
+                placeholderTextColor={colors.textMuted}
+                value={recordDate}
+                onChangeText={setRecordDate}
+              />
+              <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 4 }}>
+                {t('backdated_date_hint')} (YYYY-MM-DD)
+              </Text>
+            </View>
 
             {/* Actions */}
             <View style={styles.actionsRow}>
